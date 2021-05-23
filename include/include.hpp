@@ -8,6 +8,8 @@
 # include <fcntl.h>
 # include <arpa/inet.h>
 # include <sys/types.h>
+# include <sys/wait.h>
+# include <limits.h>
 # include <sys/un.h>
 # include <netinet/in.h>
 # include <stdio.h>
@@ -22,18 +24,23 @@
 # include <signal.h>
 # include "Console.hpp"
 
-# define closesocket(param) close(param)
-# define INVALID_SOCKET -1
-# define SOCKET_ERROR -1
+# define RED								"\033[0;31m"
+# define GREEN								"\033[0;32m"
+# define CYAN								"\033[0;36m"
+# define NC									"\033[0m"
 
-# define ENDL "\r\n"
+# define closesocket(param)					close(param)
+# define INVALID_SOCKET						-1
+# define SOCKET_ERROR						-1
 
-# define ON true
-# define OFF false
+# define ENDL								"\r\n"
 
-typedef int					t_socket;
-typedef struct sockaddr_in	t_sockaddr_in;
-typedef struct sockaddr		t_sockaddr;
+# define ON									true
+# define OFF								false
+
+typedef int									t_socket;
+typedef struct sockaddr_in					t_sockaddr_in;
+typedef struct sockaddr						t_sockaddr;
 
 typedef	std::map<std::string, std::string>	DoubleString;
 

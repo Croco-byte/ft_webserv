@@ -56,7 +56,7 @@ Webserv webserv;
 void	quit(int unused)
 {
 	(void)unused;
-	std::cout << std::endl;
+	std::cout << "\b\b  " << std::endl;
 	webserv.stop();
 	Console::info("Quit by CTRL-C");
 	exit(0);
@@ -69,11 +69,8 @@ int		main(int ac, char **av)
 		Console::error("Require a configuration file");
 		return (1);
 	}
-
 	signal(SIGINT, quit);
-
 	webserv.loadConfiguration(av[1]);
 	webserv.run();
-
 	return (0);
 }

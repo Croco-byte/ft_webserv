@@ -1,20 +1,44 @@
 #include "Webserv.hpp"
 
-Webserv::Webserv()
- : _is_running(true)
-{
+/*
+** ------ CONSTRUCTORS / DESTRUCTOR ------
+*/
 
-}
+Webserv::Webserv(): _is_running(true)
+{}
 
 Webserv::Webserv(Webserv &x)
-{
-	(void)x;
-}
+{ (void)x; }
 
 Webserv::~Webserv()
-{
+{}
 
+
+
+/*
+** ------ CORE FUNCTIONS ------
+*/
+
+void	Webserv::run(void)
+{
+	if (_manager.setup() == -1)
+	{
+		Console::error("Couldn't setup manager");
+		exit(1);
+	}
+	_manager.run();
 }
+
+void	Webserv::stop(void)
+{
+	_is_running = false;
+	_manager.clean();
+}
+
+
+/*
+** ------ CONFIGURATION PARSING FUNCTIONS ------
+*/
 
 void	Webserv::loadConfiguration(std::string filename)
 {
@@ -74,14 +98,14 @@ void	Webserv::createServer(std::vector<std::string>::iterator start, std::vector
 	{
 		if ((*start).find('{') != std::string::npos)
 		{
-			if (brace_level == 0)
+			if (brace_level == 0)							// Début d'un bloc route
 				route_start_line = start;
 			brace_level++;
 		}
 		else if ((*start).find('}') != std::string::npos)
 		{
 			brace_level--;
-			if (brace_level == 0)							// Si on parse une route
+			if (brace_level == 0)							// Fin d'un bloc route
 			{
 				route_end_line = start;
 				tmp_route = this->createRoute(route_start_line, route_end_line);
@@ -89,25 +113,22 @@ void	Webserv::createServer(std::vector<std::string>::iterator start, std::vector
 			}
 			else if (brace_level == -1)						// Si on a finit de parse un server
 			{
+				std::cout << "Once" << std::endl;
 				server.load(conf);
-				vecServer.push_back(server);
-				server = vecServer.back();
-				conf = server.getConfiguration();
-				Console::info("Create server : " + conf.getName() + " " + conf.getHost() + ":" + std::to_string(conf.getPort()));
-				conf = ServerConfiguration();
+				_manager.addServer(server);
+				conf = ServerConfiguration();				// Réinitialisation pour parse un serveur suivant à partir des valeurs par défaut
 			}
 		}
 		Utils::trim(*start);
 		*start = Utils::remove_char(*start, ";");
 		tmp = Utils::split(*start, " ");
-		if (tmp.size() >= 2 && brace_level == 0)
+		if (tmp.size() >= 2 && brace_level == 0)			// On ne parse pas une route, mais bien la configuration du serveur quand brace_level est 0
 		{
 			instruction = Utils::trim(tmp[0]);
 			param = Utils::trim(tmp[1]);
 			vecParam = Utils::split(param, ",");
 			for (size_t i = 0; i < vecParam.size(); i++)
 				Utils::trim(vecParam[i]);
-
 			std::cout << instruction << " : " << param << std::endl;
 			if (instruction == "listen")
 				conf.setPort(std::atoi(param.c_str()));
@@ -178,37 +199,4 @@ Route	Webserv::createRoute(std::vector<std::string>::iterator start, std::vector
 	}
 	std::cout << route << std::endl;
 	return (route);
-}
-
-void	Webserv::run()
-{
-	std::vector<Server>::iterator	iterator = vecServer.begin();
-
-	while (iterator != vecServer.end())
-	{
-		iterator->init();
-		iterator->start();
-		iterator++;
-	}
-
-	while (_is_running)
-	{
-		iterator = vecServer.begin();
-		while (iterator != vecServer.end())
-		{
-			iterator->loop();
-			iterator++;
-		}
-	}
-}
-
-void	Webserv::stop()
-{
-	_is_running = false;
-	std::vector<Server>::iterator	iterator = vecServer.begin();
-	while (iterator != vecServer.end())
-	{
-		iterator->stop();
-		iterator++;
-	}
 }

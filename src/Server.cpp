@@ -1,97 +1,104 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
+/*   Updated: 2021/05/23 15:58:04 by user42           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "Server.hpp"
 
+/*
+** ------ CONSTRUCTORS / DESTRUCTOR ------
+*/
 Server::Server()
-{
-
-}
+{}
 
 Server::Server(const Server &x)
 {
-	_sock = x._sock;
-	_sin = x._sin;
-	_csock = x._csock;
-	_csin = x._csin;
-	_taille = x._taille;
-	_vecClients = x._vecClients;
-	_isRunning = x._isRunning;
+	_fd = x._fd;
+	_addr = x._addr;
+	_requests = x._requests;
 	_config = x._config;
 }
 
 Server::~Server()
+{}
+
+
+
+/*
+** ------ SETUP AND CLOSE SERVER ------
+*/
+int		Server::setup(void)
 {
+	int	on(1);
+	int	rc(0), flags(0);
 
-}
-
-void	Server::load(ServerConfiguration conf)
-{
-	_config = conf;
-}
-
-void	Server::init()
-{
-	_isRunning = false;
-	_sock = socket(AF_INET, SOCK_STREAM, 0);						// TCP, TCP, 0
-	_sin.sin_addr.s_addr = htonl(INADDR_ANY);						// IP
-	_sin.sin_family = AF_INET;										// TCP
-	_sin.sin_port = htons(_config.getPort());
-	_taille = sizeof(_csin);
-
-	if (_sock == SOCKET_ERROR)
-		Utils::quit("Error while creating socket");
-
-	if (bind(_sock, (t_sockaddr*)&_sin, sizeof(_sin)) == SOCKET_ERROR)
+	_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (_fd < 0)
 	{
-		Console::error("Error while attributing addr and port to socket on server " + _config.getHost() + ":" + std::to_string(_config.getPort()));
-		perror(" =>");
-		exit(1);
+		Console::error("Couldn't create server : socket() call failed");
+		return (-1);
 	}
-	Console::info("Server " + _config.getName() + " initialized successfully");
-}
-
-void	Server::start()
-{
-	if (listen(_sock, 5) == SOCKET_ERROR)
-		Utils::quit("Error socket could not listen.");
-	
-	std::cout << "Server started on port : " << _config.getPort() << std::endl;
-
-	_isRunning = true;
-}
-
-void	Server::loop()
-{
-	fcntl(_sock, F_SETFL, O_NONBLOCK);
-	_csock = accept(_sock, (t_sockaddr*)&_csin, &_taille);
-	if (_csock != -1)
+	rc = setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, (const void *)&on, sizeof(on));
+	if (rc < 0)
 	{
-		std::cout << "new client with fd " << _csock << std::endl;
-		_vecClients.push_back(new Client(_csock, _csin));
+		Console::error("Couldn't create server : setsockopt() call failed");
+		close(_fd);
+		return (-1);
 	}
-
-	for (unsigned int i = 0; i < _vecClients.size(); i++)
+	flags = fcntl(_fd, F_GETFL, 0);
+	rc = fcntl(_fd, F_SETFL, flags | O_NONBLOCK);
+	if (rc < 0)
 	{
-		if (_vecClients[i]->waitRequest())
-		{
-			this->handleRequest(_vecClients[i]);
-			if 	(!this->_isRunning)
-				break ;
-		}
+		Console::error("Couldn't create server : fcntl() call failed");
+		close(_fd);
+		return (-1);
 	}
+	_addr.sin_family = AF_INET;
+	_addr.sin_port = htons(_config.getPort());
+	_addr.sin_addr.s_addr = inet_addr((_config.getHost().c_str()));
+	rc = bind(_fd, (struct sockaddr *)&_addr, sizeof(_addr));
+	if (rc < 0)
+	{
+		Console::error("Couldn't create server [" + _config.getHost() + ":" + std::to_string(_config.getPort()) + "]" + " : bind() call failed");
+		close(_fd);
+		return (-1);
+	}
+	rc = listen(_fd, 1000);
+	if (rc < 0)
+	{
+		Console::error("Couldn't create server : listen() call failed");
+		close(_fd);
+		return (-1);
+	}
+	return(0);
 }
 
-/**
- * Traite la requête, génère la réponse, et l'envoie au client
- * @param Client
- */
-void	Server::handleRequest(Client *client)
+void				Server::clean(void)
 {
-	std::string	request_str;
+	_requests.clear();
+	close(_fd);
+}
+
+
+
+/*
+** ------ SEND / RECV / ACCEPT ------
+*/
+long				Server::send(long socket)
+{
 	Request		request;
 	Response	response;
 
-	request_str = client->getRequest();
+	std::string request_str = _requests[socket];
+	_requests.erase(socket);
 	request.load(request_str);
-	request.setIP(client->getIP());
 
 	this->handleRequestHeaders(request, response);
 	this->handleRequestURL(request, response);
@@ -99,14 +106,67 @@ void	Server::handleRequest(Client *client)
 	std::string body = "<html><body><h1>YASSSS</h1></body></html>";
 	response.setHeader("Content-Length", std::to_string(body.length()));
 	response.setBody(body);
-	client->sendResponse(response.build());
+	std::string toSend = response.build();
+
+	int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
+	std::cout << std::endl << GREEN << "------ Sent response ------" << std::endl << "[" << std::endl << toSend << std::endl << "]" << NC << std::endl << std::endl;
+	if (ret == -1)
+	{
+		close(socket);
+		return (-1);
+	}
+	else
+		return (0);
 }
 
-/**
- * Traite les headers de la requête
- * @param Request
- * @param Response
- */
+long				Server::recv(long socket)
+{
+	char buffer[2048] = {0};
+	int ret;
+
+	ret = ::recv(socket, buffer, 2047, 0);
+	if (ret == 0 || ret == -1)
+	{
+		close(socket);
+		if (!ret)
+			Console::info("Connection on socket " + std::to_string(socket) + " was closed by client on server [" + _config.getHost() + ":" + std::to_string(_config.getPort()) + "]");
+		else
+			Console::info("Read error on socket " + std::to_string(socket) + ". Closing this connexion on server [" + _config.getHost() + ":" + std::to_string(_config.getPort()) + "]");
+		return (-1);
+	}
+	_requests[socket] += std::string(buffer);
+	std::cout << std::endl << CYAN << "------ Received request ------" << std::endl << "[" << std::endl << _requests[socket] << "]" << NC << std::endl << std::endl;
+	return (0);
+}
+
+long				Server::accept(void)
+{
+	long	socket;
+
+	socket = ::accept(_fd, NULL, NULL);
+	fcntl(socket, F_SETFL, O_NONBLOCK);
+	Console::info("Connexion received. Created non-blocking socket " + std::to_string(socket) + " for server [" + _config.getHost() + ":" + std::to_string(_config.getPort()) + "]");
+	return (socket);
+}
+
+
+/*
+** ------ GETTERS / SETTERS ------
+*/
+long				Server::getFD(void) const
+{ return (this->_fd); }
+
+ServerConfiguration	Server::getConfiguration() const
+{ return (_config); }
+
+void	Server::load(ServerConfiguration conf)
+{ _config = conf; }
+
+
+
+/*
+** ------ PRIVATE HELPERS : HEADER HANDLERS ------
+*/
 void	Server::handleRequestHeaders(Request request, Response &response)
 {
 	DoubleString				headers = request.getHeaders();
@@ -191,15 +251,6 @@ void	Server::handleRequestHeaders(Request request, Response &response)
 	}
 }
 
-void	Server::stop()
-{
-	for (unsigned int i = 0; i < _vecClients.size(); i++)
-			_vecClients[i]->closeConnection();
-	_vecClients.clear();
-	close(_sock);
-	_isRunning = false;
-}
-
 void	Server::handleCharset(std::vector<std::string> vecCharset, Response &response)
 {
 	for (std::vector<std::string>::iterator it = vecCharset.begin(); it != vecCharset.end(); it++)
@@ -276,7 +327,7 @@ void	Server::handleAuthorization(Request request, std::vector<std::string> vecDa
 
 	if (vecData.size() <= 1)
 	{
-		Console::error("Authorization header bad formatted");
+		Console::error("Wrong format for authorization header");
 		return ;
 	}
 
@@ -289,23 +340,18 @@ void	Server::handleAuthorization(Request request, std::vector<std::string> vecDa
 
 }
 
-ServerConfiguration	Server::getConfiguration() const
-{
-	return (_config);
-}
-
+/*
+** ------ PRIVATE HELPERS : URL HANDLERS ------
+*/
 void		Server::handleRequestURL(Request request, Response &response)
 {
 	Route	route;
-	// bool	is_directory = false;
-	// bool	has_extension = false;
-	// bool	must_execut_cgi = false;
 
 	(void)response;
 	route = this->findCorrespondingRoute(request.getURL());
 	if (this->requestRequireCGI(request, route))
 	{
-		Console::info("Request require CGI !");
+		std::cout << "CGI required = yes" << std::endl;
 		if (route.getCGIBinary().empty())
 			Console::error("Error no CGI configured !");
 		else
@@ -318,7 +364,7 @@ void		Server::handleRequestURL(Request request, Response &response)
 		}
 	}
 	else
-		Console::info("No need to execute the CGI.");
+		std::cout << "CGI required = no" << std::endl;
 }
 
 Route		Server::findCorrespondingRoute(std::string URL)
@@ -354,7 +400,7 @@ std::string	Server::getLocalPath(Request request, Route route)
 
 	if (route.getRoute() != "/")
 		localPath.erase(localPath.find(route.getRoute()), route.getRoute().length());
-	
+
 	// Si y a pas de "/" séparateur on rajoute
 	if (route.getLocalURL()[route.getLocalURL().length() - 1] != '/' && localPath[0] != '/')
 		localPath = "/" + localPath;
@@ -368,10 +414,15 @@ std::string	Server::getLocalPath(Request request, Route route)
 			localPath += "/";
 		localPath += route.getIndex();
 	}
-	Console::info("LOCAL PATH => " + localPath);
+	std::cout << "LOCAL PATH = " + localPath << std::endl;
 	return (localPath);
 }
 
+
+
+/*
+** ------ PRIVATE HELPERS : CGI HANDLERS ------
+*/
 bool		Server::requestRequireCGI(Request request, Route route)
 {
 	std::vector<std::string>	vecExtensions = route.getCGIExtensions();

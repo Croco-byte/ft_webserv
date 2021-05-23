@@ -11,8 +11,6 @@ void						Request::load(std::string request)
 	std::vector<std::string>	tmpVec;
 	unsigned int				row;
 
-	std::cout << request << std::endl;
-
 	request_lines = Utils::split(request, "\n");
 	
 	if (request_lines.size() <= 1)
@@ -26,7 +24,7 @@ void						Request::load(std::string request)
 	URL = line[1];
 	version = line[2];
 
-	std::cout << "method = " << method << std::endl << "URL = " << URL << std::endl << "version = " << version << std::endl;
+	std::cout << "------ Request processing info ------" << std::endl << "method = " << method << std::endl << "URL = " << URL << std::endl << "version = " << version << std::endl;
 
 	row = 1;
 

@@ -67,7 +67,7 @@ std::string	Response::build()
 	 * EN-TETE : Valeur <crlf>...
 	 */
 	for (DoubleString::iterator it = _headers.begin(); it != _headers.end(); it++)
-		headers.append(it->first + " : " + it->second + ENDL);
+		headers.append(it->first + ": " + it->second + ENDL);
 
 	/**
 	 * Build response

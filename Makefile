@@ -1,11 +1,11 @@
 SRCS			=	src/main.cpp  \
 					src/Server.cpp \
-					src/Client.cpp  \
 					src/Request.cpp  \
 					src/Response.cpp  \
 					src/ServerConfiguration.cpp \
 					src/Route.cpp \
 					src/Webserv.cpp \
+					src/ConnexionManager.cpp \
 					src/utils/file.cpp \
 					src/utils/time.cpp  \
 					src/utils/quit.cpp   \
@@ -17,7 +17,8 @@ OBJS			= $(SRCS:.cpp=.o)
 CC				= g++
 RM				= rm -f
 INCLUDE			= -I./include/
-CFLAGS			= -std=c++98 -Wall -Werror -Wextra -g -fsanitize=address
+CFLAGS			= -Wall -Werror -Wextra -g -fsanitize=address
+# -std=c++98
 LIBS			= 
 
 NAME			= webserv
