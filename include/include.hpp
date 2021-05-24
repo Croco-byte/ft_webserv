@@ -49,6 +49,7 @@ namespace Utils
 	void						quit(std::string error);
 
 	std::vector<std::string>	split(const std::string& str, const std::string& delim);
+	bool						ft_isspace(char c);
 	bool						is_empty(std::string str);
 	std::string					&trim(std::string &s);
 	std::string					to_lower(std::string &str);

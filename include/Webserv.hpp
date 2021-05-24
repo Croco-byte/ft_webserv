@@ -10,24 +10,39 @@
 class Webserv
 {
 	public:
+		/* TYPEDEFS */
+		typedef typename std::vector<std::string>::iterator		ConfIterator;
+
+		/* CONSTRUCTORS | DESTRUCTOR */
 		Webserv();
 		Webserv(Webserv &x);
 		~Webserv();
 
 
 		/* CORE FUNCTIONS */
-		void		run(void);
-		void		stop(void);
+		void								run(void);
+		void								stop(void);
 
 		/* CONF PARSING FUNCTIONS */
-		void		loadConfiguration(std::string filename);
-		void		createServer(std::vector<std::string>::iterator start, std::vector<std::string>::iterator end);
-		Route		createRoute(std::vector<std::string>::iterator start, std::vector<std::string>::iterator end);
+		void								parseConfiguration(std::string filename);
+		Route								createRoute(ConfIterator start, ConfIterator end);
 
 
 	private:
 		ConnexionManager		_manager;
 		bool					_is_running;
+
+		/* PRIVATE HELPERS : UTILITY IDENTIFIERS */
+		bool								isServBlockStart(std::string const & line)				const;
+		bool								isRouteBlockStart(std::string const & line)				const;
+		bool								isValidDirective(std::string const & directive)			const;
+	
+		/* PRIVATE HELPERS : SERVER CONF PARSING*/
+		bool								handleConfLine(std::string const & line, ServerConfiguration & conf);
+		void								parseServerConfLine(std::string & line, ServerConfiguration & conf);
+		void								createServers(std::vector<std::string> & lines);
+		void								createServer(ConfIterator start, ConfIterator end);
+
 };
 
 #endif

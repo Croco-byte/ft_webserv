@@ -21,10 +21,10 @@ class	ServerConfiguration
 		std::string						getName() const;
 		std::string						getHost() const;
 		std::string						getErrorPageLocation(int code);
-		std::map<int, std::string>		getErrorPageLocations() const;
+		std::map<int, std::string> const &		getErrorPageLocations() const;
 		int								getPort() const;
 		int								getLimit() const;
-		std::vector<Route>				getRoutes() const;
+		std::vector<Route> const &				getRoutes() const;
 
 	private:
 		std::string					_name;
@@ -38,5 +38,8 @@ class	ServerConfiguration
 
 		std::string					default_error_page_loc;
 };
+
+std::ostream	&operator<<(std::ostream &stream, ServerConfiguration const & conf);
+
 
 #endif

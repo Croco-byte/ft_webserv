@@ -1,6 +1,169 @@
 #include "Webserv.hpp"
 
 /*
+** ------ PRIVATE CONF PARSING HELPERS ------
+*/
+
+bool						Webserv::isServBlockStart(std::string const & line) const
+{
+	int		i(0);
+	while(line[i] && Utils::ft_isspace(line[i]))
+		i++;
+	if (line.compare(i, 6, "server") != 0)
+		return (false);
+	i += 6;
+	while(line[i] && Utils::ft_isspace(line[i]))
+		i++;
+	if (!line[i] || line[i] != '{')
+		return (false);
+	i++;
+	while(line[i] && Utils::ft_isspace(line[i]))
+		i++;
+	if (line[i] != '\0')
+		return (false);
+	return (true);
+}
+
+bool						Webserv::isRouteBlockStart(std::string const & line) const
+{
+		int		i(0);
+	while(line[i] && Utils::ft_isspace(line[i]))
+		i++;
+	if (line.compare(i, 8, "location") != 0)
+		return (false);
+	i += 8;
+	while(line[i] && line[i] != '{')
+		i++;
+	if (!line[i] || line[i] != '{')
+		return (false);
+	i++;
+	while(line[i] && Utils::ft_isspace(line[i]))
+		i++;
+	if (line[i] != '\0')
+		return (false);
+	return (true);
+}
+
+bool						Webserv::isValidDirective(std::string const & directive) const
+{
+	if (directive == "listen" || directive == "host" || directive == "server_name"
+		|| directive == "error" || directive == "client_max_body_size")
+		return (true);
+	return (false);
+}
+
+bool						Webserv::handleConfLine(std::string const & line, ServerConfiguration & conf)
+{
+	std::vector<std::string>			tmp;
+	std::string							instruction;
+	std::vector<std::string>			params;
+
+	tmp = Utils::split(line, " ");
+	if (tmp.size() < 2)
+		return (false);
+	instruction = Utils::trim(tmp[0]);
+	params = Utils::split(tmp[1], ",");
+	for (size_t i = 0; i < params.size(); i++)
+		Utils::trim(params[i]);
+	
+	if (isValidDirective(instruction))
+	{
+		if (instruction == "listen")
+			conf.setPort(std::atoi(params[0].c_str()));
+		else if (instruction == "host")
+			conf.setHost(params[0]);
+		else if (instruction == "server_name")
+			conf.setName(params[0]);
+		else if (instruction == "error")
+			conf.addErrorPageLocation(std::atoi(params[0].c_str()), params[1]);
+		else if (instruction == "client_max_body_size")
+			conf.setLimitBodySize(std::atoi(params[0].c_str()));
+		return (true);
+	}
+	return (false);
+}
+
+void						Webserv::parseServerConfLine(std::string & line, ServerConfiguration & conf)
+{
+	Utils::trim(line);
+	if (line.size() < 4)
+	{
+		Console::error("Configuration parsing failure: unexpected line '" + line + "'");
+		exit(1);
+	}
+	if (line[line.size() - 1] != ';')
+	{
+		Console::error("Configuration parsing failure: expected ';' after '" + line + "'");
+		exit(1);
+	}
+	line = line.substr(0, line.size() - 1);
+	if (!(handleConfLine(line, conf)))
+	{
+		Console::error("Configuration parsing failure: unknown directive on line '" + line + "'");
+		exit(1);
+	}
+}
+
+void						Webserv::createServers(std::vector<std::string> & lines)
+{
+	int			brace_level(0);
+
+	for (ConfIterator it = lines.begin(); it != lines.end(); it++)
+	{
+		if (isServBlockStart(*it))
+		{
+			ConfIterator block_start = it;
+			it++;
+			brace_level++;
+			while (brace_level && it != lines.end())
+			{
+				if ((*it).find('{') != std::string::npos)
+					brace_level++;
+				if ((*it).find('}') != std::string::npos)
+					brace_level--;
+				it++;
+			}
+			if (brace_level == 0)
+				this->createServer(block_start, it);
+			else
+			{
+				Console::error("Configuration parsing failure: missing '}'");
+				exit(1);
+			}
+		}
+	}
+}
+
+void	Webserv::createServer(ConfIterator start, ConfIterator end)
+{
+	Server								server;
+	ServerConfiguration					conf;
+
+	start++;
+	end--;
+	for (; start != end; start++)
+	{
+		if (isRouteBlockStart(*start))
+		{
+			ConfIterator block_start = start;
+			start++;
+			while (start != end && (*start).find('}') == std::string::npos)
+				start++;
+			ConfIterator block_end = start;
+			Route parsedRoute = this->createRoute(block_start, block_end);
+			conf.addRoute(parsedRoute);
+		}
+		else if (!(Utils::is_empty(*start)))
+			parseServerConfLine(*start, conf);
+	}
+	std::cout << conf << std::endl;
+	server.load(conf);
+	_manager.addServer(server);
+}
+
+
+
+/*
 ** ------ CONSTRUCTORS / DESTRUCTOR ------
 */
 
@@ -40,112 +203,23 @@ void	Webserv::stop(void)
 ** ------ CONFIGURATION PARSING FUNCTIONS ------
 */
 
-void	Webserv::loadConfiguration(std::string filename)
+void	Webserv::parseConfiguration(std::string filename)
 {
-	std::ifstream file(filename.c_str());
+	std::string							line;
+	std::vector<std::string>			lines;
+	std::ifstream						file(filename.c_str());
 
-	if (file.is_open() && file.good())
+	if (!(file.is_open() && file.good()))
 	{
-		std::string							line;
-		int									brace_level = 0;
-		std::vector<std::string>			lines;
-		std::vector<std::string>::iterator	server_start_line;
-		std::vector<std::string>::iterator	server_end_line;
-
-		while (std::getline(file, line))
-			lines.push_back(line);
-		for (std::vector<std::string>::iterator it = lines.begin(); it != lines.end(); it++)
-		{
-			line = *it;
-			if (line.find('{') != std::string::npos)
-			{
-				if (brace_level == 0)
-				{
-					Console::info("init");
-					server_start_line = it + 1;
-				}
-				brace_level++;
-			}
-			if (line.find('}') != std::string::npos)
-			{
-				brace_level--;
-				if (brace_level == 0)							// Si on parse un server
-				{
-					server_end_line = lines.end();
-					this->createServer(server_start_line, server_end_line);
-				}
-			}
-		}
-	}
-	else
 		Console::error("Cannot open conf file");
-}
-
-void	Webserv::createServer(std::vector<std::string>::iterator start, std::vector<std::string>::iterator end)
-{
-	Server								server;
-	int									brace_level = 0;
-	ServerConfiguration					conf;
-	std::string							instruction;
-	std::string							param;
-	std::vector<std::string>			vecParam;
-	std::vector<std::string>			tmp;
-	std::vector<std::string>::iterator	route_start_line;
-	std::vector<std::string>::iterator	route_end_line;
-	Route								tmp_route;
-
-	while (start != end)
-	{
-		if ((*start).find('{') != std::string::npos)
-		{
-			if (brace_level == 0)							// Début d'un bloc route
-				route_start_line = start;
-			brace_level++;
-		}
-		else if ((*start).find('}') != std::string::npos)
-		{
-			brace_level--;
-			if (brace_level == 0)							// Fin d'un bloc route
-			{
-				route_end_line = start;
-				tmp_route = this->createRoute(route_start_line, route_end_line);
-				conf.addRoute(tmp_route);
-			}
-			else if (brace_level == -1)						// Si on a finit de parse un server
-			{
-				std::cout << "Once" << std::endl;
-				server.load(conf);
-				_manager.addServer(server);
-				conf = ServerConfiguration();				// Réinitialisation pour parse un serveur suivant à partir des valeurs par défaut
-			}
-		}
-		Utils::trim(*start);
-		*start = Utils::remove_char(*start, ";");
-		tmp = Utils::split(*start, " ");
-		if (tmp.size() >= 2 && brace_level == 0)			// On ne parse pas une route, mais bien la configuration du serveur quand brace_level est 0
-		{
-			instruction = Utils::trim(tmp[0]);
-			param = Utils::trim(tmp[1]);
-			vecParam = Utils::split(param, ",");
-			for (size_t i = 0; i < vecParam.size(); i++)
-				Utils::trim(vecParam[i]);
-			std::cout << instruction << " : " << param << std::endl;
-			if (instruction == "listen")
-				conf.setPort(std::atoi(param.c_str()));
-			else if (instruction == "host")
-				conf.setHost(param);
-			else if (instruction == "server_name")
-				conf.setName(param);
-			else if (instruction == "error")
-				conf.addErrorPageLocation(std::atoi(vecParam[0].c_str()), vecParam[1]);
-			else if (instruction == "client_max_body_size")
-				conf.setLimitBodySize(std::atoi(param.c_str()));
-		}
-		start++;
+		return ;
 	}
+	while (std::getline(file, line))
+		lines.push_back(line);
+	this->createServers(lines);
 }
 
-Route	Webserv::createRoute(std::vector<std::string>::iterator start, std::vector<std::string>::iterator end)
+Route	Webserv::createRoute(ConfIterator start, ConfIterator end)
 {
 	Route						route;
 	std::string					instruction;
@@ -197,6 +271,5 @@ Route	Webserv::createRoute(std::vector<std::string>::iterator start, std::vector
 			Console::error("in parsing of route : " + *start);
 		start++;
 	}
-	std::cout << route << std::endl;
 	return (route);
 }

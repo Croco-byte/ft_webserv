@@ -19,6 +19,13 @@ namespace Utils
 		return tokens;
 	}
 
+	bool					ft_isspace(char c)
+	{
+		if ((c >= 9 && c <= 13) || c == 32)
+			return (true);
+		return (false);
+	}
+
 	bool					is_empty(std::string str)
 	{
 		for (unsigned int i= 0; i < str.length(); i++)

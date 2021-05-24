@@ -70,7 +70,7 @@ int		main(int ac, char **av)
 		return (1);
 	}
 	signal(SIGINT, quit);
-	webserv.loadConfiguration(av[1]);
+	webserv.parseConfiguration(av[1]);
 	webserv.run();
 	return (0);
 }

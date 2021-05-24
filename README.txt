@@ -77,13 +77,13 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 [TODO]	Lorsque je requiers un fichier en .php, le programme crash sur la VM (message d'erreur : "AddressSanitizer failed to allocate 0x7f154aabf321 bytes"). C'est sûrement un problème spécifique à Linux puisque de ton côté ça fonctionnait, mais il faudra voir
 		ce qui bloque sur Linux, vu qu'on devrait être corrigé sur la VM.
 
-[TODO]	On a des problèmes de parsing du fichier de configuration lorsque plusieurs serveurs sont présents dans ce fichier. Par exemple, la première ligne "server {" du second serveur est traitée
+[DONE]	On a des problèmes de parsing du fichier de configuration lorsque plusieurs serveurs sont présents dans ce fichier. Par exemple, la première ligne "server {" du second serveur est traitée
 		comme une instruction pour ce second serveur.
 
-[TODO]	Bind call échoue lorsque plusieurs serveurs sont présents dans le fichier de configuration, sur des ports pourtant différents (et non utilisés en local).
+[DONE]	Bind call échoue lorsque plusieurs serveurs sont présents dans le fichier de configuration, sur des ports pourtant différents (et non utilisés en local).
 		EDIT : c'est simplement lié au problème du parsing du fichier de configuration relevé ci-dessus. S'occuper du parsing réglera ce problème.
 
-[TODO]	Dans la fonction loadConfiguration (Webserv.cpp), le parsing des blocks "server" peut être revue : ligne 45, on s'arrête à la première '}' qui clôt un bloc de serveur,
+[DONE]	Dans la fonction loadConfiguration (Webserv.cpp), le parsing des blocks "server" peut être revue : ligne 45, on s'arrête à la première '}' qui clôt un bloc de serveur,
 		puis on envoie l'intégralité des lignes du fichier de configuration à la fonction createServer. La fonction createServer parcourt ensuite le fichier en entier, et s'occuppe
 		de chaque bloc de serveur.
 		Il serait peut-être plus logique que la fonction loadConfiguration soit celle qui s'occupe de repérer les blocs de serveurs, puis de passer chaque bloc de serveur à la fonction

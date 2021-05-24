@@ -63,6 +63,6 @@ class	Route
 		std::string					_auth_pass;
 };
 
-std::ostream	&operator<<(std::ostream &stream, Route &route);
+std::ostream	&operator<<(std::ostream &stream, Route const & route);
 
 #endif

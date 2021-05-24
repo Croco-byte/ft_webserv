@@ -166,7 +166,7 @@ std::string					Route::getAuthPass() const
 	return (_auth_pass);
 }
 
-std::ostream	&operator<<(std::ostream &stream, Route &route)
+std::ostream	&operator<<(std::ostream &stream, Route const & route)
 {
 	stream	<< "\033[0;33m" << std::endl
 			<< "############## Route " << route.getRoute() << " ##############" << std::endl

@@ -1,4 +1,8 @@
 SRCS			=	src/main.cpp  \
+					src/utils/file.cpp \
+					src/utils/time.cpp  \
+					src/utils/quit.cpp   \
+					src/utils/string.cpp  \
 					src/Server.cpp \
 					src/Request.cpp  \
 					src/Response.cpp  \
@@ -6,10 +10,6 @@ SRCS			=	src/main.cpp  \
 					src/Route.cpp \
 					src/Webserv.cpp \
 					src/ConnexionManager.cpp \
-					src/utils/file.cpp \
-					src/utils/time.cpp  \
-					src/utils/quit.cpp   \
-					src/utils/string.cpp  \
 					src/CGI.cpp
 
 OBJS			= $(SRCS:.cpp=.o)

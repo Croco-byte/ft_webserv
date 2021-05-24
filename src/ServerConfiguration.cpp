@@ -85,7 +85,7 @@ std::string	ServerConfiguration::getErrorPageLocation(int code)
 	return (_error_page_locations[code]);
 }
 
-std::map<int, std::string>		ServerConfiguration::getErrorPageLocations() const
+std::map<int, std::string> const &		ServerConfiguration::getErrorPageLocations() const
 {
 	return (_error_page_locations);
 }
@@ -100,7 +100,24 @@ int			ServerConfiguration::getLimit() const
 	return (_limit_body_size);
 }
 
-std::vector<Route>	ServerConfiguration::getRoutes() const
+std::vector<Route> const &	ServerConfiguration::getRoutes() const
 {
 	return (_vecRoutes);
+}
+
+
+std::ostream	& operator<<(std::ostream &stream, ServerConfiguration const & conf)
+{
+	stream << "\033[0;33m" << std::endl;
+	stream << ">>>>>>>>>>>>>> Server configuration <<<<<<<<<<<<<<" << std::endl;
+	stream << "\033[0m";
+	stream << "    - listen				: " << conf.getPort() << std::endl;
+	stream << "    - host				: " << conf.getHost() << std::endl;
+	stream << "    - server_name			: " << conf.getName() << std::endl;
+	stream << "    - limit_body_size			: " << conf.getLimit() << std::endl;
+
+	for (std::vector<Route>::const_iterator it = (conf.getRoutes()).begin(); it != (conf.getRoutes()).end(); it++)
+		std::cout << *it << std::endl;
+
+	return (stream);
 }
