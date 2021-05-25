@@ -1,7 +1,6 @@
 #include "Response.hpp"
 
-Response::Response()
- : _protocol("HTTP/1.1"), _status(200)
+Response::Response() : _protocol("HTTP/1.1"), _status(200)
 {
 	this->initResponseCodeExplications();
 	this->setHeader("Date", Utils::get_current_time());
@@ -33,9 +32,7 @@ void		Response::initResponseCodeExplications()
 }
 
 void		Response::setStatus(int status)
-{
-	_status = status;
-}
+{ _status = status; }
 
 void		Response::setHeader(std::string name, std::string value)
 {
@@ -43,14 +40,10 @@ void		Response::setHeader(std::string name, std::string value)
 }
 
 void		Response::setBody(std::string text)
-{
-	_body = text;
-}
+{ _body = text; }
 
 int			Response::getStatus() const
-{
-	return (_status);
-}
+{ return (_status); }
 
 std::string	Response::build()
 {

@@ -92,7 +92,8 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 
 [DONE]	Attention, la fonction to_string (utilisée pour l'affichage de Console notamment) est du C++11, de même que d'autres fonctions de manipulation des strings dans la classe Console. Si on
 		conserve l'affichage des messages de logs (sur stdout, ou dans un fichier de log), il faudra remplacer ces fonctions.
-		De même pour memcpy (utilisé dans ConnexionManager), qui ne fait pas partie des fonctions autorisées.
+		
+[TODO]	De même pour memcpy (utilisé dans ConnexionManager), qui ne fait pas partie des fonctions autorisées, remplacer par un ft_memcpy.
 
 [DONE]	La fonction remove_char (par exemple utilisée dans Webserv, fonction createServer) pourrait être optimisée (et raccourcie). En général, lorsqu'on veut retirer un élément
 		particulier d'un container (ou d'un string), on utilise le "erase-remove idiom", voir : https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
@@ -102,3 +103,14 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 [TODO]	Le parsing de la page d'erreur ne fonctionne pas encore. Dans la fonction addErrorPageLocation, "code" est 0 si l'on en précise pas, et location est systématiquement une chaîne vide.
 		Sur ce dernier point, c'est plutôt logique car on envoie à la fonction le string vecParam[1], qui n'existe pas car il n'y a pas de virgule sur la ligne.
 		Toujours au niveau des errorPageLocations, on définit par défaut des pages d'erreur pour les codes 2xx et 3xx, ce qui n'est pas nécessaire, ces pages ne seront jamais des erreurs.
+
+[TODO]	Récupérer le contenu du fichier dans la réponse du serveur et l'afficher.
+
+[TODO]	Gestion des différents headers : notamment le Transfer-Encoding pour le parsing de la requête.
+
+[TODO]	Gestion des pages et des codes d'erreur.
+
+[TODO]	Finaliser le CGI (petits leaks qui restent)
+
+[TODO]	Ajouter un path par défaut pour la configuration.
+

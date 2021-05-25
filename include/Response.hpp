@@ -7,14 +7,15 @@ class Response
 {
 	public:
 		Response();
+		~Response();
 
-		void		setStatus(int status);
-		void		setHeader(std::string name, std::string value);
-		void		setBody(std::string text);
+		void			setStatus(int status);
+		void			setHeader(std::string const & name, std::string const & value);
+		void			setBody(std::string const & content);
 
-		int			getStatus() const;
+		int				getStatus(void) const;
 
-		std::string	build();
+		std::string		build(void);
 
 	private:
 		void						initResponseCodeExplications();
