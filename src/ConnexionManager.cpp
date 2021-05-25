@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConnexionManager.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
+/*   By: yel-alou <yel-alou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 10:31:05 by user42            #+#    #+#             */
-/*   Updated: 2021/05/23 15:59:41 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/25 08:07:16 by yel-alou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ int				ConnexionManager::setup(void)
 			_listen_fds.insert(std::make_pair(fd, &(*lstn)));
 			if (fd > _max_fd)
 				_max_fd = fd;
-			Console::info("Setting up server [" + (*lstn).getConfiguration().getHost() + ":" + std::to_string((*lstn).getConfiguration().getPort()) + "]");
+			Console::info("Setting up server [" + (*lstn).getConfiguration().getHost() + ":" + Utils::to_string((*lstn).getConfiguration().getPort()) + "]");
 		}
 	}
 	if (_max_fd == 0)

@@ -61,7 +61,7 @@ std::string	Response::build()
 	/**
 	 * VERSION-HTTP CODE EXPLICATION-CODE <crlf>
 	 */
-	status_line = _protocol + " " + std::to_string(_status) + " " + _code_explications[_status] + ENDL;
+	status_line = _protocol + " " + Utils::to_string(_status) + " " + _code_explications[_status] + ENDL;
 
 	/**
 	 * EN-TETE : Valeur <crlf>...

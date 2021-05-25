@@ -11,7 +11,7 @@ class Webserv
 {
 	public:
 		/* TYPEDEFS */
-		typedef typename std::vector<std::string>::iterator		ConfIterator;
+		typedef std::vector<std::string>::iterator		ConfIterator;
 
 		/* CONSTRUCTORS | DESTRUCTOR */
 		Webserv();

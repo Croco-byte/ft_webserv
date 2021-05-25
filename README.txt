@@ -90,11 +90,11 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 		createServer, qui gérerait seulement les blocs de serveur individuels et leurs routes (au lieu de parcourir tout le fichier). Ce qui permettrait également de régler les
 		problèmes de parsing liés à la présence de plusieurs blocs "server".
 
-[TODO]	Attention, la fonction to_string (utilisée pour l'affichage de Console notamment) est du C++11, de même que d'autres fonctions de manipulation des strings dans la classe Console. Si on
+[DONE]	Attention, la fonction to_string (utilisée pour l'affichage de Console notamment) est du C++11, de même que d'autres fonctions de manipulation des strings dans la classe Console. Si on
 		conserve l'affichage des messages de logs (sur stdout, ou dans un fichier de log), il faudra remplacer ces fonctions.
 		De même pour memcpy (utilisé dans ConnexionManager), qui ne fait pas partie des fonctions autorisées.
 
-[TODO]	La fonction remove_char (par exemple utilisée dans Webserv, fonction createServer) pourrait être optimisée (et raccourcie). En général, lorsqu'on veut retirer un élément
+[DONE]	La fonction remove_char (par exemple utilisée dans Webserv, fonction createServer) pourrait être optimisée (et raccourcie). En général, lorsqu'on veut retirer un élément
 		particulier d'un container (ou d'un string), on utilise le "erase-remove idiom", voir : https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
 		On peut donc remplacer l'appel à "remove_char" (qui utilise elle-même split, et est au final assez complexe, avec un vector temporaire) par la ligne :
 			*start.erase(std::remove(*start.begin(), *start.end(), ';'), *start.end());
