@@ -2,14 +2,13 @@
 
 Route::Route()
  : _require_auth(false)
-{
-
-}
+{}
 
 Route::Route(const Route &x)
 {
 	_accepted_methods = x._accepted_methods;
 	_auto_index = x._auto_index;
+	_index = x._index;
 	_route = x._route;
 	_local_url = x._local_url;
 	_cgi_bin = x._cgi_bin;
@@ -21,150 +20,94 @@ Route::Route(const Route &x)
 }
 
 Route::~Route()
-{
+{}
 
-}
+void								Route::setAcceptedMethods(std::vector<std::string> const & vec)
+{ _accepted_methods = vec; }
 
-void	Route::setAcceptedMethods(std::vector<std::string> vec)
-{
-	_accepted_methods = vec;
-}
+void								Route::addAcceptedMethod(std::string const & method)
+{ _accepted_methods.push_back(method); }
 
-void	Route::addAcceptedMethod(std::string method)
-{
-	_accepted_methods.push_back(method);
-}
+void								Route::setRequireAuth(bool on)
+{ _require_auth = on; }
 
-void	Route::setRequireAuth(bool on)
-{
-	_require_auth = on;
-}
+void								Route::enableRequireAuth(void)
+{ _require_auth = true; }
 
-void	Route::enableRequireAuth()
-{
-	_require_auth = true;
-}
+void								Route::disableRequireAuth(void)
+{ _require_auth = false; }
 
-void	Route::disableRequireAuth()
-{
-	_require_auth = false;
-}
+void								Route::setAutoIndex(bool on)
+{ _auto_index = on; }
 
-void	Route::setAutoIndex(bool on)
-{
-	_auto_index = on;
-}
+void								Route::enableAutoIndex(void)
+{ _auto_index = true; }
 
-void	Route::enableAutoIndex()
-{
-	_auto_index = true;
-}
+void								Route::disableAutoIndex(void)
+{ _auto_index = false; }
 
-void	Route::disableAutoIndex()
-{
-	_auto_index = false;
-}
+void								Route::setIndex(std::string const & index)
+{ _index = index; }
 
-void	Route::setIndex(std::string index)
-{
-	_index = index;
-}
+void								Route::setRoute(std::string const & route)
+{ _route = route; }
 
-void	Route::setRoute(std::string route)
-{
-	_route = route;
-}
+void								Route::setLocalURL(std::string const & url)
+{ _local_url = url; }
 
-void	Route::setLocalURL(std::string url)
-{
-	_local_url = url;
-}
+void								Route::setCGIBinary(std::string const & path)
+{ _cgi_bin = path; }
 
-void	Route::setCGIBinary(std::string path)
-{
-	_cgi_bin = path;
-}
+void								Route::setCGIExtensions(std::vector<std::string> const & ext)
+{ _cgi_extensions = ext; }
 
-void	Route::setCGIExtensions(std::vector<std::string> ext)
-{
-	_cgi_extensions = ext;
-}
+void								Route::addCGIExtension(std::string const & ext)
+{ _cgi_extensions.push_back(ext); }
 
-void	Route::addCGIExtension(std::string ext)
-{
-	_cgi_extensions.push_back(ext);
-}
+void								Route::setUploadDir(std::string const & dir)
+{ _upload_dir = dir; }
 
-void	Route::setUploadDir(std::string dir)
-{
-	_upload_dir = dir;
-}
-
-void	Route::setAuthId(std::string id)
+void								Route::setAuthId(std::string const & id)
 {
 	_auth_id = id;
 	_require_auth = true;
 }
 
-void	Route::setAuthPass(std::string pass)
-{
-	_auth_pass = pass;
-}
+void								Route::setAuthPass(std::string const & pass)
+{ _auth_pass = pass; }
 
-std::vector<std::string>	Route::getAcceptedMethods() const
-{
-	return (_accepted_methods);
-}
+std::vector<std::string> const &	Route::getAcceptedMethods(void) const
+{ return (_accepted_methods); }
 
-std::vector<std::string>	Route::getCGIExtensions() const
-{
-	return (_cgi_extensions);
-}
+std::vector<std::string> const &	Route::getCGIExtensions(void) const
+{ return (_cgi_extensions); }
 
-bool						Route::requireAuth() const
-{
-	return (_require_auth);
-}
+bool								Route::requireAuth(void) const
+{ return (_require_auth); }
 
-bool						Route::autoIndex() const
-{
-	return (_auto_index);
-}
+bool								Route::autoIndex(void) const
+{ return (_auto_index); }
 
-std::string					Route::getIndex() const
-{
-	return (_index);
-}
+std::string	const &					Route::getIndex(void) const
+{ return (_index); }
 
-std::string					Route::getRoute() const
-{
-	return (_route);
-}
+std::string const &					Route::getRoute(void) const
+{ return (_route); }
 
-std::string					Route::getLocalURL() const
-{
-	return (_local_url);
-}
+std::string const &					Route::getLocalURL(void) const
+{ return (_local_url); }
 
-std::string					Route::getCGIBinary() const
-{
-	return (_cgi_bin);
-}
+std::string const &					Route::getCGIBinary(void) const
+{ return (_cgi_bin); }
 
-std::string					Route::getUploadDir() const
-{
-	return (_upload_dir);
-}
+std::string const &					Route::getUploadDir(void) const
+{ return (_upload_dir); }
 
-std::string					Route::getAuthId() const
-{
-	return (_auth_id);
-}
+std::string const &					Route::getAuthId(void) const
+{ return (_auth_id); }
 
-std::string					Route::getAuthPass() const
-{
-	return (_auth_pass);
-}
+std::string const &					Route::getAuthPass(void) const
+{ return (_auth_pass); }
 
 std::ostream	&operator<<(std::ostream &stream, Route const & route)
 {

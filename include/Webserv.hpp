@@ -25,24 +25,30 @@ class Webserv
 
 		/* CONF PARSING FUNCTIONS */
 		void								parseConfiguration(std::string filename);
-		Route								createRoute(ConfIterator start, ConfIterator end);
 
 
 	private:
 		ConnexionManager		_manager;
 		bool					_is_running;
 
-		/* PRIVATE HELPERS : UTILITY IDENTIFIERS */
-		bool								isServBlockStart(std::string const & line)				const;
-		bool								isRouteBlockStart(std::string const & line)				const;
-		bool								isValidDirective(std::string const & directive)			const;
-	
-		/* PRIVATE HELPERS : SERVER CONF PARSING*/
-		bool								handleConfLine(std::string const & line, ServerConfiguration & conf);
-		void								parseServerConfLine(std::string & line, ServerConfiguration & conf);
+		/* PRIVATE HELPERS : IDENTIFIERS */
+		bool								isServBlockStart(std::string const & line)					const;
+		bool								isRouteBlockStart(std::string const & line)					const;
+		bool								isValidServDirective(std::string const & directive)			const;
+		bool								isValidRouteDirective(std::string const & directive)		const;
+
+		/* PRIVATE HELPERS : SERVER CREATION */
 		void								createServers(std::vector<std::string> & lines);
 		void								createServer(ConfIterator start, ConfIterator end);
 
+		/* PRIVATE HELPERS : SERVER CONF PARSING */
+		void								parseServerConfLine(std::string & line, ServerConfiguration & conf);
+		bool								handleServerConfLine(std::string const & line, ServerConfiguration & conf);
+
+		/* PRIVATE HELPERS : ROUTE CONF PARSING */
+		Route								createRoute(ConfIterator start, ConfIterator end);
+		void								parseRouteConfLine(std::string & line, Route & route);
+		bool								handleRouteLine(std::string const & line, Route & route);
 };
 
 #endif

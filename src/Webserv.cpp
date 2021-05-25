@@ -1,9 +1,9 @@
 #include "Webserv.hpp"
 
-/*
-** ------ PRIVATE CONF PARSING HELPERS ------
-*/
 
+/*
+** ------ PRIVATE HELPERS : IDENTIFIERS ------
+*/
 bool						Webserv::isServBlockStart(std::string const & line) const
 {
 	int		i(0);
@@ -32,6 +32,8 @@ bool						Webserv::isRouteBlockStart(std::string const & line) const
 	if (line.compare(i, 8, "location") != 0)
 		return (false);
 	i += 8;
+	if (!Utils::ft_isspace(line[i]))
+		return (false);
 	while(line[i] && line[i] != '{')
 		i++;
 	if (!line[i] || line[i] != '{')
@@ -44,7 +46,7 @@ bool						Webserv::isRouteBlockStart(std::string const & line) const
 	return (true);
 }
 
-bool						Webserv::isValidDirective(std::string const & directive) const
+bool						Webserv::isValidServDirective(std::string const & directive) const
 {
 	if (directive == "listen" || directive == "host" || directive == "server_name"
 		|| directive == "error" || directive == "client_max_body_size")
@@ -52,58 +54,19 @@ bool						Webserv::isValidDirective(std::string const & directive) const
 	return (false);
 }
 
-bool						Webserv::handleConfLine(std::string const & line, ServerConfiguration & conf)
+bool						Webserv::isValidRouteDirective(std::string const & directive) const
 {
-	std::vector<std::string>			tmp;
-	std::string							instruction;
-	std::vector<std::string>			params;
-
-	tmp = Utils::split(line, " ");
-	if (tmp.size() < 2)
-		return (false);
-	instruction = Utils::trim(tmp[0]);
-	params = Utils::split(tmp[1], ",");
-	for (size_t i = 0; i < params.size(); i++)
-		Utils::trim(params[i]);
-	
-	if (isValidDirective(instruction))
-	{
-		if (instruction == "listen")
-			conf.setPort(std::atoi(params[0].c_str()));
-		else if (instruction == "host")
-			conf.setHost(params[0]);
-		else if (instruction == "server_name")
-			conf.setName(params[0]);
-		else if (instruction == "error")
-			conf.addErrorPageLocation(std::atoi(params[0].c_str()), params[1]);
-		else if (instruction == "client_max_body_size")
-			conf.setLimitBodySize(std::atoi(params[0].c_str()));
+	if (directive == "root" || directive == "index" || directive == "autoindex"
+		|| directive == "upload_dir" || directive == "cgi_extension" || directive == "cgi_bin"
+		|| directive == "methods" || directive == "auth")
 		return (true);
-	}
 	return (false);
 }
 
-void						Webserv::parseServerConfLine(std::string & line, ServerConfiguration & conf)
-{
-	Utils::trim(line);
-	if (line.size() < 4)
-	{
-		Console::error("Configuration parsing failure: unexpected line '" + line + "'");
-		exit(1);
-	}
-	if (line[line.size() - 1] != ';')
-	{
-		Console::error("Configuration parsing failure: expected ';' after '" + line + "'");
-		exit(1);
-	}
-	line = line.substr(0, line.size() - 1);
-	if (!(handleConfLine(line, conf)))
-	{
-		Console::error("Configuration parsing failure: unknown directive on line '" + line + "'");
-		exit(1);
-	}
-}
 
+/*
+** ------ PRIVATE HELPERS : SERVER CREATION ------
+*/
 void						Webserv::createServers(std::vector<std::string> & lines)
 {
 	int			brace_level(0);
@@ -162,6 +125,154 @@ void	Webserv::createServer(ConfIterator start, ConfIterator end)
 }
 
 
+/*
+** ------ PRIVATE HELPERS : SERVER CONF PARSING ------
+*/
+void						Webserv::parseServerConfLine(std::string & line, ServerConfiguration & conf)
+{
+	Utils::trim(line);
+	if (line.size() < 4)
+	{
+		Console::error("Configuration parsing failure: unexpected line '" + line + "'");
+		exit(1);
+	}
+	if (line[line.size() - 1] != ';')
+	{
+		Console::error("Configuration parsing failure: expected ';' after '" + line + "'");
+		exit(1);
+	}
+	line = line.substr(0, line.size() - 1);
+	if (!(handleServerConfLine(line, conf)))
+	{
+		Console::error("Configuration parsing failure: unknown directive on line '" + line + "'");
+		exit(1);
+	}
+}
+
+bool						Webserv::handleServerConfLine(std::string const & line, ServerConfiguration & conf)
+{
+	std::vector<std::string>			tmp;
+	std::string							instruction;
+	std::vector<std::string>			params;
+
+	tmp = Utils::split(line, " ");
+	if (tmp.size() < 2)
+		return (false);
+	instruction = Utils::trim(tmp[0]);
+	params = Utils::split(tmp[1], ",");
+	for (size_t i = 0; i < params.size(); i++)
+		Utils::trim(params[i]);
+	
+	if (isValidServDirective(instruction))
+	{
+		if (instruction == "listen")
+			conf.setPort(std::atoi(params[0].c_str()));
+		else if (instruction == "host")
+			conf.setHost(params[0]);
+		else if (instruction == "server_name")
+			conf.setName(params[0]);
+		else if (instruction == "error")
+			conf.addErrorPageLocation(std::atoi(params[0].c_str()), params[1]);
+		else if (instruction == "client_max_body_size")
+			conf.setLimitBodySize(std::atoi(params[0].c_str()));
+		return (true);
+	}
+	return (false);
+}
+
+
+/*
+** ------ PRIVATE HELPERS : ROUTE CONF PARSING ------
+*/
+
+Route	Webserv::createRoute(ConfIterator start, ConfIterator end)
+{
+	Route						route;
+
+	std::vector<std::string>	firstLine = Utils::split(Utils::trim(*start), " ");
+	if (firstLine.size() != 3)
+	{
+		Console::error("Configuration parsing failure: wrong format for location line '" + *start + "'");
+		exit(1);
+	}
+	route.setRoute(firstLine[1]);
+	start++;
+	for (; start != end; start++)
+	{
+		if (!(Utils::is_empty(*start)))
+			parseRouteConfLine(*start, route);
+	}
+	return (route);
+}
+
+void						Webserv::parseRouteConfLine(std::string & line, Route & route)
+{
+	Utils::trim(line);
+	if (line.size() < 4)
+	{
+		Console::error("Configuration parsing failure: unexpected line '" + line + "'");
+		exit(1);
+	}
+	if (line[line.size() - 1] != ';')
+	{
+		Console::error("Configuration parsing failure: expected ';' after '" + line + "'");
+		exit(1);
+	}
+	line = line.substr(0, line.size() - 1);
+	if (!(handleRouteLine(line, route)))
+	{
+		Console::error("Configuration parsing failure: unknown directive on line '" + line + "'");
+		exit(1);
+	}
+}
+
+bool						Webserv::handleRouteLine(std::string const & line, Route & route)
+{
+	std::vector<std::string>			tmp;
+	std::string							instruction;
+	std::vector<std::string>			params;
+
+	tmp = Utils::split(line, " ");
+	if (tmp.size() < 2)
+		return (false);
+	instruction = Utils::trim(tmp[0]);
+	params = Utils::split(tmp[1], ",");
+	for (size_t i = 0; i < params.size(); i++)
+		Utils::trim(params[i]);
+	
+	if (isValidRouteDirective(instruction))
+	{
+		if (instruction == "root")
+			route.setLocalURL(params[0]);
+		else if (instruction == "index")
+			route.setIndex(params[0]);
+		else if (instruction == "autoindex")
+			route.setAutoIndex(Utils::string_to_bool(params[0]));
+		else if (instruction == "upload_dir")
+			route.setUploadDir(params[0]);
+		else if (instruction == "cgi_extension")
+			route.setCGIExtensions(params);
+		else if (instruction == "cgi_bin")
+			route.setCGIBinary(params[0]);
+		else if (instruction == "methods")
+			route.setAcceptedMethods(params);
+		else if (instruction == "auth")
+		{
+			std::vector<std::string> vec = Utils::split(params[0], ":");
+			if (vec.size() != 2)
+				return (false);
+			else
+			{
+				route.setAuthId(vec[0]);
+				route.setAuthPass(vec[1]);
+			}
+		}
+		return (true);
+	}
+	return (false);
+}
+
+
 
 /*
 ** ------ CONSTRUCTORS / DESTRUCTOR ------
@@ -217,59 +328,4 @@ void	Webserv::parseConfiguration(std::string filename)
 	while (std::getline(file, line))
 		lines.push_back(line);
 	this->createServers(lines);
-}
-
-Route	Webserv::createRoute(ConfIterator start, ConfIterator end)
-{
-	Route						route;
-	std::string					instruction;
-	std::string					param;
-	std::vector<std::string>	vecParam;
-	std::vector<std::string>	tmp;
-
-	*start = Utils::remove_char(*start, "{");
-	while (start != end)
-	{
-		tmp = Utils::split(Utils::remove_char(Utils::trim(*start), ";"), " ");
-		if (tmp.size() == 2)
-		{
-			instruction = tmp[0];
-			param = tmp[1];
-			vecParam = Utils::split(param, ",");
-			for (size_t i = 0; i < vecParam.size(); i++)
-				Utils::trim(vecParam[i]);
-
-			if (instruction == "location")
-				route.setRoute(param);
-			else if (instruction == "root")
-				route.setLocalURL(param);
-			else if (instruction == "index")
-				route.setIndex(param);
-			else if (instruction == "autoindex")
-				route.setAutoIndex(Utils::string_to_bool(param));
-			else if (instruction == "upload_dir")
-				route.setUploadDir(param);
-			else if (instruction == "cgi_extension")
-				route.setCGIExtensions(vecParam);
-			else if (instruction == "cgi_bin")
-				route.setCGIBinary(param);
-			else if (instruction == "methods")
-				route.setAcceptedMethods(vecParam);
-			else if (instruction == "auth")
-			{
-				std::vector<std::string> vec = Utils::split(param, ":");
-				if (vec.size() != 2)
-					Console::error("auth bad configured in route " + route.getRoute());
-				else
-				{
-					route.setAuthId(vec[0]);
-					route.setAuthPass(vec[1]);
-				}
-			}
-		}
-		else
-			Console::error("in parsing of route : " + *start);
-		start++;
-	}
-	return (route);
 }
