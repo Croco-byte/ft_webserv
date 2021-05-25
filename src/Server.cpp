@@ -12,7 +12,7 @@
 
 #include "Server.hpp"
 
-/*
+/*s
 ** ------ CONSTRUCTORS / DESTRUCTOR ------
 */
 Server::Server()
@@ -296,7 +296,7 @@ void	Server::handleLanguage(Request request, std::vector<std::string> vecLang, R
 			{
 				tmpVec[1] = Utils::trim(tmpVec[1]);
 				tmpVec[1] = tmpVec[1].substr(2, tmpVec[1].length() - 2);
-				coef = std::stof(tmpVec[1]);
+				coef = std::atof(tmpVec[1].c_str());
 			}
 			else
 				coef = 1.f;
@@ -436,6 +436,9 @@ bool		Server::requestRequireCGI(Request request, Route route)
 
 void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route)
 {
+	DoubleString	headers = request.getHeaders();
+
+	request.print();
 	cgi.addMetaVariable("GATEWAY_INTERFACE", "CGI/1.1");
 	cgi.addMetaVariable("SERVER_NAME", this->_config.getName());
 	cgi.addMetaVariable("SERVER_SOFTWARE", "webserv/1.0");
@@ -447,11 +450,14 @@ void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route)
 	cgi.addMetaVariable("SCRIPT_NAME", route.getCGIBinary());
 	cgi.addMetaVariable("DOCUMENT_ROOT", "test");												// A COMPLETER
 	cgi.addMetaVariable("QUERY_STRING", "test");												// A COMPLETER
-	cgi.addMetaVariable("REMOTE_ADDR", request.getIP());										// A COMPLETER
+	cgi.addMetaVariable("REMOTE_ADDR", request.getIP());
 	cgi.addMetaVariable("AUTH_TYPE", (route.requireAuth() ? "BASIC" : ""));
 	cgi.addMetaVariable("REMOTE_USER", "user");
-	if (request.getHeaders().find("Content-Type") != request.getHeaders().end())
-		cgi.addMetaVariable("CONTENT_TYPE", request.getHeaders().find("Content-Type")->second);
+	if (headers.find("Content-Type") != headers.end())
+	{
+		DoubleString::iterator it = headers.find("Content-Type");
+		cgi.addMetaVariable("CONTENT_TYPE", it->second);
+	}
 	cgi.addMetaVariable("CONTENT_LENGTH", Utils::to_string(request.getBody().length()));
 	cgi.addMetaVariable("HTTP_ACCEPT", request.getHeaders()["HTTP_ACCEPT"]);
 	cgi.addMetaVariable("HTTP_USER_AGENT", request.getHeaders()["User-Agent"]);
