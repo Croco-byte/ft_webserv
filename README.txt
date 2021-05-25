@@ -114,3 +114,4 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 
 [TODO]	Ajouter un path par défaut pour la configuration.
 
+[TODO]	Gestion des server_names et du serveur par défaut.
