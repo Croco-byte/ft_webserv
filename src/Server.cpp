@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: yel-alou <yel-alou@student.42.fr>          +#+  +:+       +#+        */
+/*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/25 08:07:07 by yel-alou         ###   ########.fr       */
+/*   Updated: 2021/05/25 17:30:14 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,11 +101,11 @@ long				Server::send(long socket)
 	request.load(request_str);
 
 	this->handleRequestHeaders(request, response);
-	this->handleRequestURL(request, response);
-
-	std::string body = "<html><body><h1>YASSSS</h1></body></html>";
-	response.setHeader("Content-Length", Utils::to_string(body.length()));
+	this->handleCGI(request);
+	std::string	body = this->generateResponseBody(request);
 	response.setBody(body);
+	response.setHeader("Content-Length", Utils::to_string(body.length()));
+	
 	std::string toSend = response.build();
 
 	int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
@@ -150,6 +150,7 @@ long				Server::accept(void)
 }
 
 
+
 /*
 ** ------ GETTERS / SETTERS ------
 */
@@ -165,89 +166,80 @@ void	Server::load(ServerConfiguration conf)
 
 
 /*
+** ------ GET ERROR PAGES ------
+*/
+std::string			Server::get404Page(void)
+{
+	return (Utils::getFileContent("/www/default/404.html"));						// A rectifier en fonction des error pages locations par la suite.
+}
+
+
+
+/*
+** ------ PRIVATE HELPERS : RESPONSE BODY HANDLERS ------
+*/
+std::string			Server::generateResponseBody(Request const & request)
+{
+	Route			route = findCorrespondingRoute(request.getURL());
+	std::string		targetPath = getLocalPath(request, route);
+
+	std::cout << "Target path = " + targetPath << std::endl;
+	if (!Utils::pathExists(targetPath))
+		return (get404Page());
+	else
+	{
+		if (!Utils::isRegularFile(targetPath))
+			std::cout << "Target path " << targetPath << " isn't a regular file : returning error 500" << std::endl;
+		return(Utils::getFileContent(targetPath));
+	}
+}
+
+
+/*
 ** ------ PRIVATE HELPERS : HEADER HANDLERS ------
 */
-void	Server::handleRequestHeaders(Request request, Response &response)
+void				Server::handleRequestHeaders(Request request, Response &response)
 {
 	DoubleString				headers = request.getHeaders();
 
 	for (DoubleString::iterator it = headers.begin(); it != headers.end(); it++)
 	{
 		if (it->first == "Accept-Charset")
-		{
 			this->handleCharset(Utils::split(it->second, ","), response);
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Accept-Language")
-		{
 			this->handleLanguage(request, Utils::split(it->second, ","), response);
+/*		else if (it->first == "Allow")
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
-		else if (it->first == "Allow")
-		{
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Authorization")
-		{
 			this->handleAuthorization(request, Utils::split(it->second, " "), response);
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Content-Language")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Content-Length")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Content-Location")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Content-Type")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Date")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Host")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Last-Modified")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Location")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Referer")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Retry-After")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Server")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "Transfer-Encoding")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "User-Agent")
-		{
 			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
 		else if (it->first == "WWW-Authenticate")
-		{
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		}
+			// std::cout << "Handle " << it->first << " : " << it->second << std::endl; */
 	}
 }
 
@@ -276,7 +268,7 @@ void	Server::handleLanguage(Request request, std::vector<std::string> vecLang, R
 
 	if (vecLang.size() == 1 && vecLang[0] != "*")
 	{
-		if (Utils::file_exist(request.getURL() + "." + vecLang[0]))
+		if (Utils::pathExists(request.getURL() + "." + vecLang[0]))
 		{
 			response.setHeader("Content-Language", vecLang[0]);
 			return ;
@@ -305,7 +297,7 @@ void	Server::handleLanguage(Request request, std::vector<std::string> vecLang, R
 
 		for (std::map<float, std::string>::reverse_iterator it = mapLang.rbegin(); it != mapLang.rend(); it++)
 		{
-			if (Utils::file_exist(request.getURL() + "." + it->second))
+			if (Utils::pathExists(request.getURL() + "." + it->second))
 			{
 				response.setHeader("Content-Language", it->second);
 				return ;
@@ -336,36 +328,13 @@ void	Server::handleAuthorization(Request request, std::vector<std::string> vecDa
 	vecCredentials = Utils::split(decoded, ":");
 	id = vecCredentials[0];
 	password = vecCredentials[1];
-	Console::info("Try to connect with : " + id + ":" + password);
+	Console::info("Trying to connect with : " + id + ":" + password);
 
 }
 
 /*
 ** ------ PRIVATE HELPERS : URL HANDLERS ------
 */
-void		Server::handleRequestURL(Request request, Response &response)
-{
-	Route	route;
-
-	(void)response;
-	route = this->findCorrespondingRoute(request.getURL());
-	if (this->requestRequireCGI(request, route))
-	{
-		std::cout << "CGI required = yes" << std::endl;
-		if (route.getCGIBinary().empty())
-			Console::error("Error no CGI configured !");
-		else
-		{
-			CGI	cgi;
-			this->generateMetaVariables(cgi, request, route);
-			cgi.setBinary("./a.out");//route.getCGIBinary());
-			cgi.execute();
-
-		}
-	}
-	else
-		std::cout << "CGI required = no" << std::endl;
-}
 
 Route		Server::findCorrespondingRoute(std::string URL)
 {
@@ -395,7 +364,6 @@ Route		Server::findCorrespondingRoute(std::string URL)
 
 std::string	Server::getLocalPath(Request request, Route route)
 {
-	struct stat	path_stat;
 	std::string	localPath = request.getURL();
 
 	if (route.getRoute() != "/")
@@ -406,15 +374,8 @@ std::string	Server::getLocalPath(Request request, Route route)
 		localPath = "/" + localPath;
 
 	localPath = route.getLocalURL() + localPath;
-
-	stat(localPath.c_str(), &path_stat);
-	if (S_ISDIR(path_stat.st_mode))
-	{
-		if (localPath[localPath.length() - 1] != '/')
-			localPath += "/";
-		localPath += route.getIndex();
-	}
-	std::cout << "LOCAL PATH = " + localPath << std::endl;
+	if (Utils::isDirectory(localPath))
+		localPath = (localPath[localPath.size() - 1] == '/') ? localPath + route.getIndex() : localPath + "/" + route.getIndex();
 	return (localPath);
 }
 
@@ -423,6 +384,30 @@ std::string	Server::getLocalPath(Request request, Route route)
 /*
 ** ------ PRIVATE HELPERS : CGI HANDLERS ------
 */
+
+void		Server::handleCGI(Request request)
+{
+	Route	route;
+
+	route = this->findCorrespondingRoute(request.getURL());
+	if (this->requestRequireCGI(request, route))
+	{
+		std::cout << "CGI required = yes" << std::endl;
+		if (route.getCGIBinary().empty())
+			Console::error("Error: no CGI configured !");
+		else
+		{
+			CGI	cgi;
+			this->generateMetaVariables(cgi, request, route);
+			cgi.setBinary("./a.out");//route.getCGIBinary());
+			cgi.execute();
+
+		}
+	}
+	else
+		std::cout << "CGI required = no" << std::endl;
+}
+
 bool		Server::requestRequireCGI(Request request, Route route)
 {
 	std::vector<std::string>	vecExtensions = route.getCGIExtensions();

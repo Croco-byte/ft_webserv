@@ -8,6 +8,9 @@ Response::Response() : _protocol("HTTP/1.1"), _status(200)
 	this->setHeader("Content-Length", "0");
 }
 
+Response::~Response()
+{}
+
 void		Response::initResponseCodeExplications()
 {
 	_code_explications[200] = "OK";
@@ -34,12 +37,10 @@ void		Response::initResponseCodeExplications()
 void		Response::setStatus(int status)
 { _status = status; }
 
-void		Response::setHeader(std::string name, std::string value)
-{
-		_headers[name] = value;
-}
+void		Response::setHeader(std::string const & name, std::string const & value)
+{ _headers[name] = value; }
 
-void		Response::setBody(std::string text)
+void		Response::setBody(std::string const & text)
 { _body = text; }
 
 int			Response::getStatus() const

@@ -3,6 +3,7 @@
 
 # include <unistd.h>
 # include <iostream>
+# include <fstream>
 # include <sys/socket.h>
 # include <cstdlib>
 # include <fcntl.h>
@@ -73,7 +74,10 @@ namespace Utils
 	std::string					colorify(std::string str);
 	std::string					colorify(bool on);
 
-	bool						file_exist(std::string filename);
+	bool						pathExists(std::string const & filename);
+	bool						isRegularFile(std::string const & filename);
+	bool						isDirectory(std::string const & name);
+	std::string					getFileContent(std::string const & filename);
 	std::string					get_file_extension(std::string filename);
 
 	template <typename T1, typename T2>

@@ -2,12 +2,23 @@
 
 namespace Utils
 {
-	bool			file_exist(std::string const & filename)
+	bool			pathExists(std::string const & filename)
 	{
 		struct stat	tmp_stat;
 		if (stat(filename.c_str(), &tmp_stat) != -1)
 			return (true);
 		return (false);
+	}
+
+	std::string		getFileContent(std::string const & filename)
+	{
+		std::ifstream file(filename.c_str());
+		if (file.is_open() && file.good())
+		{
+			std::string content((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
+			return (content);
+		}
+		return ("");
 	}
 
 	bool			isRegularFile(std::string const & filename)
