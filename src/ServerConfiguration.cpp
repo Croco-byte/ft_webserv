@@ -3,14 +3,6 @@
 ServerConfiguration::ServerConfiguration()
  : _name("Default server name"), _host("127.0.0.1"), _port(8080), _limit_body_size(INT_MAX - 1), default_error_page_loc("/error.html")
 {
-	_error_page_locations[200] = default_error_page_loc;
-	_error_page_locations[201] = default_error_page_loc;
-	_error_page_locations[202] = default_error_page_loc;
-	_error_page_locations[204] = default_error_page_loc;
-	_error_page_locations[300] = default_error_page_loc;
-	_error_page_locations[301] = default_error_page_loc;
-	_error_page_locations[302] = default_error_page_loc;
-	_error_page_locations[310] = default_error_page_loc;
 	_error_page_locations[400] = default_error_page_loc;
 	_error_page_locations[401] = default_error_page_loc;
 	_error_page_locations[403] = default_error_page_loc;

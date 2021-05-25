@@ -58,6 +58,7 @@ namespace Utils
 	std::string 				base64_decode(const std::string &in);
 	std::string					remove_char(std::string &str, std::string c);
 	bool						is_alphanum(std::string str);
+	bool						is_positive_number(std::string str);
 	bool						string_to_bool(std::string on);
 	std::string					bool_to_string(bool on);
 	std::string					join(std::vector<std::string> vec);

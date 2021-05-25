@@ -256,4 +256,12 @@ namespace Utils
 		}
 		return (dst);
 	}
+
+	bool						is_positive_number(std::string str)
+	{
+		for (std::string::iterator it = str.begin(); it != str.end(); it++)
+			if (*it < '0' || *it > '9')
+				return (false);
+		return (true);
+	}
 }
