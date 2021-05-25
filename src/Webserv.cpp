@@ -172,7 +172,12 @@ bool						Webserv::handleServerConfLine(std::string const & line, ServerConfigur
 		else if (instruction == "server_name")
 			conf.setName(params[0]);
 		else if (instruction == "error")
-			conf.addErrorPageLocation(std::atoi(params[0].c_str()), params[1]);
+		{
+			if (params.size() == 2 && Utils::is_positive_number(params[1]))
+				conf.addErrorPageLocation(std::atoi(params[0].c_str()), params[1]);
+			else
+				return (false);
+		}
 		else if (instruction == "client_max_body_size")
 			conf.setLimitBodySize(std::atoi(params[0].c_str()));
 		return (true);
