@@ -109,13 +109,9 @@ namespace Utils
 
 	std::string	remove_char(std::string &str, std::string c)
 	{
-		std::vector<std::string>	tmp;
-		std::string					ret;
-
-		tmp = Utils::split(str, c);
-		for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
-			ret.append(*it);
-		return (ret);
+		for (std::string::iterator it = c.begin(); it != c.end(); it++)
+			str.erase(std::remove(str.begin(), str.end(), *it), str.end());
+		return (str);
 	}
 
 	bool		string_to_bool(std::string on)
@@ -173,5 +169,91 @@ namespace Utils
 			it_b++;
 		}
 		return (ret);
+	}
+
+	std::string					to_string(char c)
+	{
+		std::string	str = "x";
+		str[0] = c;
+		return (str);
+	}
+
+	std::string					to_string(int nb)
+	{
+		std::string	str;
+		bool		negative = false;
+
+		if (nb < 0)
+			negative = true;
+		while (nb != 0)
+		{
+			str += Utils::to_string((char)('0' + (nb % 10)));
+			nb /= 10;
+		}
+		if (negative)
+			str += "-";
+		return (Utils::reverse(str));
+	}
+
+	std::string					to_string(size_t a)
+	{
+		std::string	str;
+		
+		while (a != 0)
+		{
+			str += Utils::to_string((char)('0' + (a % 10)));
+			a /= 10;
+		}
+		return (Utils::reverse(str));
+	}
+
+	std::string					to_string(long nb)
+	{
+		std::string	str;
+		bool		negative = false;
+
+		if (nb < 0)
+			negative = true;
+		while (nb != 0)
+		{
+			str += Utils::to_string((char)('0' + (nb % 10)));
+			nb /= 10;
+		}
+		if (negative)
+			str += "-";
+		return (Utils::reverse(str));
+	}
+
+	std::string					reverse(std::string &str)
+	{
+		size_t	n = str.length();
+		char	tmp;
+
+		for (size_t i = 0; i < n / 2; i++)
+		{
+			tmp = str[i];
+			str[i] = str[n - i - 1];
+			str[n - i - 1] = tmp;
+		}
+		return (str);
+	}
+
+	void						*memcpy(void *dst, void *src, size_t len)
+	{
+		unsigned char	*s1;
+		unsigned char	*s2;
+		size_t			i;
+
+		if (dst == NULL || src == NULL)
+			return (NULL);
+		s1 = static_cast<unsigned char*>(dst);
+		s2 = static_cast<unsigned char*>(src);
+		i = 0;
+		while (i < len)
+		{
+			s1[i] = s2[i];
+			i++;
+		}
+		return (dst);
 	}
 }

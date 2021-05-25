@@ -62,6 +62,12 @@ namespace Utils
 	std::string					bool_to_string(bool on);
 	std::string					join(std::vector<std::string> vec);
 	size_t						getCommonValues(std::vector<std::string> a, std::vector<std::string> b);
+	std::string					to_string(int nb);
+	std::string					to_string(char c);
+	std::string					to_string(size_t a);
+	std::string					to_string(long a);
+	std::string					reverse(std::string &str);
+	void						*memcpy(void *dst, void *src, size_t len);
 
 	std::string					colorify(std::string str);
 	std::string					colorify(bool on);

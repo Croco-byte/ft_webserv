@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
+/*   By: yel-alou <yel-alou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/23 15:58:04 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/25 08:07:07 by yel-alou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,7 @@ int		Server::setup(void)
 	rc = bind(_fd, (struct sockaddr *)&_addr, sizeof(_addr));
 	if (rc < 0)
 	{
-		Console::error("Couldn't create server [" + _config.getHost() + ":" + std::to_string(_config.getPort()) + "]" + " : bind() call failed");
+		Console::error("Couldn't create server [" + _config.getHost() + ":" + Utils::to_string(_config.getPort()) + "]" + " : bind() call failed");
 		close(_fd);
 		return (-1);
 	}
@@ -104,7 +104,7 @@ long				Server::send(long socket)
 	this->handleRequestURL(request, response);
 
 	std::string body = "<html><body><h1>YASSSS</h1></body></html>";
-	response.setHeader("Content-Length", std::to_string(body.length()));
+	response.setHeader("Content-Length", Utils::to_string(body.length()));
 	response.setBody(body);
 	std::string toSend = response.build();
 
@@ -129,9 +129,9 @@ long				Server::recv(long socket)
 	{
 		close(socket);
 		if (!ret)
-			Console::info("Connection on socket " + std::to_string(socket) + " was closed by client on server [" + _config.getHost() + ":" + std::to_string(_config.getPort()) + "]");
+			Console::info("Connection on socket " + Utils::to_string(socket) + " was closed by client on server [" + _config.getHost() + ":" + Utils::to_string(_config.getPort()) + "]");
 		else
-			Console::info("Read error on socket " + std::to_string(socket) + ". Closing this connexion on server [" + _config.getHost() + ":" + std::to_string(_config.getPort()) + "]");
+			Console::info("Read error on socket " + Utils::to_string(socket) + ". Closing this connexion on server [" + _config.getHost() + ":" + Utils::to_string(_config.getPort()) + "]");
 		return (-1);
 	}
 	_requests[socket] += std::string(buffer);
@@ -145,7 +145,7 @@ long				Server::accept(void)
 
 	socket = ::accept(_fd, NULL, NULL);
 	fcntl(socket, F_SETFL, O_NONBLOCK);
-	Console::info("Connexion received. Created non-blocking socket " + std::to_string(socket) + " for server [" + _config.getHost() + ":" + std::to_string(_config.getPort()) + "]");
+	Console::info("Connexion received. Created non-blocking socket " + Utils::to_string(socket) + " for server [" + _config.getHost() + ":" + Utils::to_string(_config.getPort()) + "]");
 	return (socket);
 }
 
@@ -440,7 +440,7 @@ void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route)
 	cgi.addMetaVariable("SERVER_NAME", this->_config.getName());
 	cgi.addMetaVariable("SERVER_SOFTWARE", "webserv/1.0");
 	cgi.addMetaVariable("SERVER_PROTOCOL", "HTTP/1.1");											// PEUT ETRE 1.0
-	cgi.addMetaVariable("SERVER_PORT", std::to_string(this->_config.getPort()));
+	cgi.addMetaVariable("SERVER_PORT", Utils::to_string(this->_config.getPort()));
 	cgi.addMetaVariable("REQUEST_METHOD", request.getMethod());
 	cgi.addMetaVariable("PATH_INFO", "test");													// A COMPLETER
 	cgi.addMetaVariable("PATH_TRANSLATED", "test");												// A COMPLETER
@@ -452,7 +452,7 @@ void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route)
 	cgi.addMetaVariable("REMOTE_USER", "user");
 	if (request.getHeaders().find("Content-Type") != request.getHeaders().end())
 		cgi.addMetaVariable("CONTENT_TYPE", request.getHeaders().find("Content-Type")->second);
-	cgi.addMetaVariable("CONTENT_LENGTH", std::to_string(request.getBody().length()));
+	cgi.addMetaVariable("CONTENT_LENGTH", Utils::to_string(request.getBody().length()));
 	cgi.addMetaVariable("HTTP_ACCEPT", request.getHeaders()["HTTP_ACCEPT"]);
 	cgi.addMetaVariable("HTTP_USER_AGENT", request.getHeaders()["User-Agent"]);
 	cgi.addMetaVariable("HTTP_REFERER", request.getHeaders()["Referer"]);

@@ -17,7 +17,7 @@ OBJS			= $(SRCS:.cpp=.o)
 CC				= g++
 RM				= rm -f
 INCLUDE			= -I./include/
-CFLAGS			= -Wall -Werror -Wextra -g -fsanitize=address
+CFLAGS			= -Wall -Werror -Wextra -g -fsanitize=address -std=c++98
 # -std=c++98
 LIBS			= 
 
