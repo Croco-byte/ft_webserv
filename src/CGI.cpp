@@ -2,7 +2,7 @@
 
 CGI::CGI()
 {
-	this->doubleStringToChar(_metaVariables);
+	
 }
 
 CGI::CGI(const CGI &x)
