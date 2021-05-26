@@ -20,7 +20,7 @@ void	CGI::setBinary(std::string path)
 	_binary = path;
 }
 
-void	CGI::execute()
+void	CGI::execute(std::string target)
 {
 	pid_t		pid;
 	int			fd[2];
@@ -43,16 +43,18 @@ void	CGI::execute()
 	{
 		char **av = new char * [3];
 		av[0] = new char [_binary.length() + 1];
-		av[1] = new char [5];
+		av[1] = new char [target.length() + 1];
 
 		close(fd[0]);
 		dup2(fd[1], STDOUT_FILENO);
 		close(fd[1]);
 
-		strcpy(av[0], "./a.out");
-		strcpy(av[1], "test");
+		// strcpy(av[0], "./a.out");
+		// strcpy(av[1], "test");
+		strcpy(av[0], _binary.c_str());
+		strcpy(av[1], target.c_str());
 		av[2] = NULL;
-		execve(_binary.c_str(), av, NULL);
+		execve(_binary.c_str(), av, this->doubleStringToChar(_metaVariables));
 	}
 	else
 	{
@@ -66,6 +68,7 @@ void	CGI::execute()
 			output += std::string(tmp);
 		}
 		Console::info("Receive '" + output + "'");
+		_output = output;
 	}
 	
 }
@@ -82,7 +85,7 @@ char	**CGI::doubleStringToChar(DoubleString param)
 	size_t		i;
 
 	i = 0;
-	ret = new char* [param.size()];
+	ret = new char* [param.size() + 1];
 	for (DoubleString::iterator it = param.begin(); it != param.end(); it++)
 	{
 		tmp = it->first + "=" + it->second;
@@ -90,5 +93,11 @@ char	**CGI::doubleStringToChar(DoubleString param)
 		strcpy(ret[i], tmp.c_str());
 		i++;
 	}
+	ret[i] = NULL;
 	return (ret);
+}
+
+std::string		CGI::getOutput()
+{
+	return (_output);
 }

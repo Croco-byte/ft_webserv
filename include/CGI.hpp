@@ -10,9 +10,11 @@ class CGI
 		CGI(const CGI &x);
 		virtual ~CGI();
 
-		void	setBinary(std::string path);
-		void	execute();
-		void	addMetaVariable(std::string name, std::string value);
+		void		setBinary(std::string path);
+		void		execute(std::string target);
+		void		addMetaVariable(std::string name, std::string value);
+
+		std::string	getOutput();
 
 	private:
 		char			**doubleStringToChar(DoubleString map);
@@ -21,6 +23,7 @@ class CGI
 		DoubleString	_envVariables;
 		DoubleString	_argvVariables;
 		std::string		_binary;
+		std::string		_output;
 
 };
 

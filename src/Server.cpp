@@ -6,7 +6,7 @@
 /*   By: yel-alou <yel-alou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/26 08:24:34 by yel-alou         ###   ########.fr       */
+/*   Updated: 2021/05/26 09:18:02 by yel-alou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,8 +101,7 @@ long				Server::send(long socket)
 	request.load(request_str);
 
 	this->handleRequestHeaders(request, response);
-	this->handleCGI(request);
-	
+
 	std::string	body = this->generateResponseBody(request);
 	response.setBody(body);
 	response.setHeader("Content-Length", Utils::to_string(body.length()));
@@ -188,6 +187,9 @@ std::string			Server::generateResponseBody(Request const & request)
 {
 	Route			route = findCorrespondingRoute(request.getURL());
 	std::string		targetPath = getLocalPath(request, route);
+
+	if (this->requestRequireCGI(request, route))
+		return (this->execCGI(request));
 
 	Console::info("Target path = " + targetPath);
 	if (!Utils::pathExists(targetPath))
@@ -391,27 +393,28 @@ std::string	Server::getLocalPath(Request request, Route route)
 ** ------ PRIVATE HELPERS : CGI HANDLERS ------
 */
 
-void		Server::handleCGI(Request request)
+std::string		Server::execCGI(Request request)
 {
-	Route	route;
+	Route		route;
+	std::string	targetPath;
 
 	route = this->findCorrespondingRoute(request.getURL());
 	if (this->requestRequireCGI(request, route))
 	{
-		std::cout << "CGI required = yes" << std::endl;
+		targetPath = getLocalPath(request, route);
 		if (route.getCGIBinary().empty())
 			Console::error("Error: no CGI configured !");
 		else
 		{
 			CGI	cgi;
 			this->generateMetaVariables(cgi, request, route);
-			cgi.setBinary("./a.out"); //route.getCGIBinary());
-			cgi.execute();
-
+			cgi.setBinary(route.getCGIBinary());
+			cgi.execute(targetPath);
+			return (cgi.getOutput());
 		}
 	}
-	else
-		std::cout << "CGI required = no" << std::endl;
+	std::cout << "CGI required = no" << std::endl;
+	return ("");
 }
 
 bool		Server::requestRequireCGI(Request request, Route route)

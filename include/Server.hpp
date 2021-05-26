@@ -54,7 +54,7 @@ class Server
 		std::string						getLocalPath(Request request, Route route);
 
 		/* PRIVATE HELPERS : CGI HANDLERS */
-		void							handleCGI(Request request);											// Make it return a string, which should be the output of the CGI binary
+		std::string						execCGI(Request request);											// Make it return a string, which should be the output of the CGI binary
 		bool							requestRequireCGI(Request request, Route route);
 		void							generateMetaVariables(CGI &cgi, Request &request, Route &route);
 
