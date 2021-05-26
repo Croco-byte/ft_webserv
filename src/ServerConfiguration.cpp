@@ -45,6 +45,8 @@ void	ServerConfiguration::setHost(std::string host)
 void	ServerConfiguration::addErrorPageLocation(int code, std::string location)
 {
 	_error_page_locations[code] = location;
+	for (std::map<int, std::string>::iterator it = _error_page_locations.begin(); it != _error_page_locations.end(); it++)
+		Console::info(Utils::to_string(it->first) + " : " + it->second);
 }
 
 void	ServerConfiguration::setPort(int port)
