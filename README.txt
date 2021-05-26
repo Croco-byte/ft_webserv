@@ -74,7 +74,7 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 
 [DONE]	Dans le setup des serveurs, on écoute pour le moment sur "n'importe quelle interface" (INADDR_ANY) : il faut remplacer ça par le véritable hôte du fichier de configuration.
 
-[TODO]	Lorsque je requiers un fichier en .php, le programme crash sur la VM (message d'erreur : "AddressSanitizer failed to allocate 0x7f154aabf321 bytes"). C'est sûrement un problème spécifique à Linux puisque de ton côté ça fonctionnait, mais il faudra voir
+[DONE]	Lorsque je requiers un fichier en .php, le programme crash sur la VM (message d'erreur : "AddressSanitizer failed to allocate 0x7f154aabf321 bytes"). C'est sûrement un problème spécifique à Linux puisque de ton côté ça fonctionnait, mais il faudra voir
 		ce qui bloque sur Linux, vu qu'on devrait être corrigé sur la VM.
 
 [DONE]	On a des problèmes de parsing du fichier de configuration lorsque plusieurs serveurs sont présents dans ce fichier. Par exemple, la première ligne "server {" du second serveur est traitée
@@ -110,7 +110,7 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 
 [TODO]	Gestion des pages et des codes d'erreur.
 
-[TODO]	Finaliser le CGI (petits leaks qui restent)
+[DONE]	Finaliser le CGI (petits leaks qui restent)
 
 [TODO]	Ajouter un path par défaut pour la configuration.
 
