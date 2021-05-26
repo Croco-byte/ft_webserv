@@ -10,7 +10,8 @@ SRCS			=	src/main.cpp  \
 					src/Route.cpp \
 					src/Webserv.cpp \
 					src/ConnexionManager.cpp \
-					src/CGI.cpp
+					src/CGI.cpp \
+					src/AutoIndex.cpp
 
 OBJS			= $(SRCS:.cpp=.o)
 

@@ -8,6 +8,7 @@
 # include "ServerConfiguration.hpp"
 # include "Route.hpp"
 # include "CGI.hpp"
+# include "AutoIndex.hpp"
 
 class Server
 {
@@ -17,17 +18,17 @@ class Server
 		~Server();
 	
 		/* SETUP | CLEAN SERVER */
-		int						setup(void);
-		void					clean(void);
+		int								setup(void);
+		void							clean(void);
 
 		/* HANDLE INCOMING OR OUTGOING CONNEXIONS */
-		long					send(long socket);
-		long					recv(long socket);
-		long					accept(void);
+		long							send(long socket);
+		long							recv(long socket);
+		long							accept(void);
 
 		/* GETTERS | SETTERS */
-		long					getFD(void) const;
-		void					load(ServerConfiguration config);
+		long							getFD(void) const;
+		void							load(ServerConfiguration config);
 		ServerConfiguration		getConfiguration() const;
 
 		/* GET ERROR PAGES */

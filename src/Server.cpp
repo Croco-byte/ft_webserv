@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: yel-alou <yel-alou@student.42.fr>          +#+  +:+       +#+        */
+/*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/26 09:18:02 by yel-alou         ###   ########.fr       */
+/*   Updated: 2021/05/26 16:41:03 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,11 +105,6 @@ long				Server::send(long socket)
 	std::string	body = this->generateResponseBody(request);
 	response.setBody(body);
 	response.setHeader("Content-Length", Utils::to_string(body.length()));
-
-	// A ENLEVER
-	// body = "<html><body><h1>YASSSS</h1></body></html>";
-	// response.setHeader("Content-Length", std::to_string(body.length()));
-	// response.setBody(body);
 	
 	std::string toSend = response.build();
 
@@ -194,12 +189,23 @@ std::string			Server::generateResponseBody(Request const & request)
 	Console::info("Target path = " + targetPath);
 	if (!Utils::pathExists(targetPath))
 		return (get404Page());
-	else
+	if (Utils::isDirectory(targetPath))
 	{
-		if (!Utils::isRegularFile(targetPath))
-			std::cout << "Target path " << targetPath << " isn't a regular file : returning error 500" << std::endl;
-		return(Utils::getFileContent(targetPath));
+		std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
+		if (Utils::pathExists(indexPath) && Utils::isRegularFile(indexPath))
+			return (Utils::getFileContent(indexPath));										// There is an index file for this directory : we display it.
+		if (route.autoIndex())																// Else, if directory listing is enabled, we display listing.
+		{
+			AutoIndex autoindex(request.getURL(), targetPath);
+			autoindex.createIndex();
+			return (autoindex.getIndex());
+		}
+		else																				// Else, display a 403 Forbidden (TODO : replace 404 by 403 !)
+			return (get404Page());
 	}
+	if (!Utils::pathExists(targetPath) || !Utils::isRegularFile(targetPath))
+			return (get404Page());
+	return(Utils::getFileContent(targetPath));
 }
 
 
@@ -382,8 +388,6 @@ std::string	Server::getLocalPath(Request request, Route route)
 		localPath = "/" + localPath;
 
 	localPath = route.getLocalURL() + localPath;
-	if (Utils::isDirectory(localPath))
-		localPath = (localPath[localPath.size() - 1] == '/') ? localPath + route.getIndex() : localPath + "/" + route.getIndex();
 	return (localPath);
 }
 
