@@ -117,8 +117,14 @@ std::string			Request::getIP() const
 
 std::string			Request::generateQueryString(std::string line)
 {
-	line.erase(line.begin(), line.begin() + URL.length() + 1);
-	return (line);
+	if (line.find('?') != std::string::npos)
+	{
+		line.erase(line.begin(), line.begin() + URL.length() + 1);
+		Console::info("Query String = " + line);
+		return (line);
+	}
+	else
+		return ("");
 }
 
 std::string			Request::getQueryString()
