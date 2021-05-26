@@ -21,7 +21,8 @@ void						Request::load(std::string request)
 	// Set Request Line
 	line = Utils::split(request_lines[0], " ");
 	method = line[0];
-	URL = line[1];
+	URL = Utils::split(line[1], "?")[0];
+	query_string = this->generateQueryString(line[1]);
 	version = line[2];
 
 	std::cout << "------ Request processing info ------" << std::endl << "method = " << method << std::endl << "URL = " << URL << std::endl << "version = " << version << std::endl;
@@ -112,4 +113,15 @@ void				Request::setIP(std::string ip)
 std::string			Request::getIP() const
 {
 	return (_ip);
+}
+
+std::string			Request::generateQueryString(std::string line)
+{
+	line.erase(line.begin(), line.begin() + URL.length() + 1);
+	return (line);
+}
+
+std::string			Request::getQueryString()
+{
+	return (query_string);
 }

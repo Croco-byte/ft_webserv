@@ -183,6 +183,8 @@ namespace Utils
 		std::string	str;
 		bool		negative = false;
 
+		if (nb  == 0)
+			return (std::string("0"));
 		if (nb < 0)
 			negative = true;
 		while (nb != 0)
@@ -199,6 +201,8 @@ namespace Utils
 	{
 		std::string	str;
 		
+		if (a  == 0)
+			return (std::string("0"));
 		while (a != 0)
 		{
 			str += Utils::to_string((char)('0' + (a % 10)));
@@ -212,6 +216,8 @@ namespace Utils
 		std::string	str;
 		bool		negative = false;
 
+		if (nb  == 0)
+			return (std::string("0"));
 		if (nb < 0)
 			negative = true;
 		while (nb != 0)

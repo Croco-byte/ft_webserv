@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
+/*   By: yel-alou <yel-alou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/25 17:30:14 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/26 08:24:34 by yel-alou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,9 +102,15 @@ long				Server::send(long socket)
 
 	this->handleRequestHeaders(request, response);
 	this->handleCGI(request);
+	
 	std::string	body = this->generateResponseBody(request);
 	response.setBody(body);
 	response.setHeader("Content-Length", Utils::to_string(body.length()));
+
+	// A ENLEVER
+	// body = "<html><body><h1>YASSSS</h1></body></html>";
+	// response.setHeader("Content-Length", std::to_string(body.length()));
+	// response.setBody(body);
 	
 	std::string toSend = response.build();
 
@@ -183,7 +189,7 @@ std::string			Server::generateResponseBody(Request const & request)
 	Route			route = findCorrespondingRoute(request.getURL());
 	std::string		targetPath = getLocalPath(request, route);
 
-	std::cout << "Target path = " + targetPath << std::endl;
+	Console::info("Target path = " + targetPath);
 	if (!Utils::pathExists(targetPath))
 		return (get404Page());
 	else
@@ -399,7 +405,7 @@ void		Server::handleCGI(Request request)
 		{
 			CGI	cgi;
 			this->generateMetaVariables(cgi, request, route);
-			cgi.setBinary("./a.out");//route.getCGIBinary());
+			cgi.setBinary("./a.out"); //route.getCGIBinary());
 			cgi.execute();
 
 		}
@@ -422,19 +428,20 @@ bool		Server::requestRequireCGI(Request request, Route route)
 void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route)
 {
 	DoubleString	headers = request.getHeaders();
+	std::string		targetPath = getLocalPath(request, route);
 
 	request.print();
 	cgi.addMetaVariable("GATEWAY_INTERFACE", "CGI/1.1");
 	cgi.addMetaVariable("SERVER_NAME", this->_config.getName());
 	cgi.addMetaVariable("SERVER_SOFTWARE", "webserv/1.0");
-	cgi.addMetaVariable("SERVER_PROTOCOL", "HTTP/1.1");											// PEUT ETRE 1.0
+	cgi.addMetaVariable("SERVER_PROTOCOL", "HTTP/1.1");
 	cgi.addMetaVariable("SERVER_PORT", Utils::to_string(this->_config.getPort()));
 	cgi.addMetaVariable("REQUEST_METHOD", request.getMethod());
-	cgi.addMetaVariable("PATH_INFO", "test");													// A COMPLETER
-	cgi.addMetaVariable("PATH_TRANSLATED", "test");												// A COMPLETER
+	// cgi.addMetaVariable("PATH_INFO", "test");												// A COMPLETER
+	cgi.addMetaVariable("PATH_TRANSLATED", targetPath);
 	cgi.addMetaVariable("SCRIPT_NAME", route.getCGIBinary());
-	cgi.addMetaVariable("DOCUMENT_ROOT", "test");												// A COMPLETER
-	cgi.addMetaVariable("QUERY_STRING", "test");												// A COMPLETER
+	cgi.addMetaVariable("DOCUMENT_ROOT", route.getLocalURL());									// A Vérifier
+	cgi.addMetaVariable("QUERY_STRING", request.getQueryString());
 	cgi.addMetaVariable("REMOTE_ADDR", request.getIP());
 	cgi.addMetaVariable("AUTH_TYPE", (route.requireAuth() ? "BASIC" : ""));
 	cgi.addMetaVariable("REMOTE_USER", "user");

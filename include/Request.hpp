@@ -20,8 +20,11 @@ class Request
 		DoubleString				getHeaders() const;
 		std::string					getBody() const;
 		std::string					getIP() const;
+		std::string					getQueryString();
 
 	private:
+
+		std::string					generateQueryString(std::string line);
 
 		std::vector<std::string>	request_lines;
 
@@ -37,6 +40,7 @@ class Request
 		DoubleString				data;
 		// name=test&password=pass
 		std::string					data_str;
+		std::string					query_string;
 		bool						mustClose;
 };
 
