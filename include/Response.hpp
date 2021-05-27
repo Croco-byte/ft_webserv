@@ -13,6 +13,8 @@ class Response
 		void			setHeader(std::string const & name, std::string const & value);
 		void			setBody(std::string const & content);
 
+		std::string		getBody() const;
+
 		int				getStatus(void) const;
 
 		std::string		build(void);

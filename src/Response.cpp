@@ -73,3 +73,8 @@ std::string	Response::build()
 
 	return (response);
 }
+
+std::string		Response::getBody() const
+{
+	return (_body);
+}

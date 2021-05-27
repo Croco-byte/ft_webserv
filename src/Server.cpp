@@ -6,7 +6,7 @@
 /*   By: yel-alou <yel-alou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/27 08:49:09 by yel-alou         ###   ########.fr       */
+/*   Updated: 2021/05/27 09:16:01 by yel-alou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,13 +102,19 @@ long				Server::send(long socket)
 
 	this->handleRequestHeaders(request, response);
 
-	std::string	body = this->generateResponseBody(request);
-	response.setBody(body);
-	response.setHeader("Content-Length", Utils::to_string(body.length()));
+	if (!this->requestIsValid(request))
+		this->handleRequestErrors(request, response);
 
-	if (requestRequireRedirection(request))
-		generateRedirection(request, response);
+	else if (requestRequireRedirection(request))
+		this->generateRedirection(request, response);
+
+	else
+	{
+		std::string	body = this->generateResponseBody(request);
+		response.setBody(body);
+	}
 	
+	response.setHeader("Content-Length", Utils::to_string(response.getBody().length()));
 	std::string toSend = response.build();
 
 	int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
@@ -173,7 +179,7 @@ void	Server::load(ServerConfiguration conf)
 */
 std::string			Server::get404Page(void)
 {
-	return (Utils::getFileContent("/www/default/404.html"));						// A rectifier en fonction des error pages locations par la suite.
+	return (Utils::getFileContent(_config.getErrorPageLocation(404)));						// A rectifier en fonction des error pages locations par la suite.
 }
 
 
@@ -485,3 +491,30 @@ void		Server::generateRedirection(Request request, Response &response)
 	response.setHeader("Location", request.getURL() + "/");
 }
 
+
+bool		Server::requestIsValid(Request request)
+{
+	Route			route = findCorrespondingRoute(request.getURL());
+	std::string		targetPath = getLocalPath(request, route);
+
+	if (!Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
+		return (false);
+
+	return (true);
+}
+
+void		Server::handleRequestErrors(Request request, Response &response)
+{
+	Route			route = findCorrespondingRoute(request.getURL());
+	std::string		targetPath = getLocalPath(request, route);
+
+	if (!Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
+	{
+		Console::error("404");
+		response.setStatus(404);
+		Console::info(_config.getErrorPageLocation(404));
+		Console::info(this->get404Page());
+		response.setBody(this->get404Page());
+		return ;
+	}
+}

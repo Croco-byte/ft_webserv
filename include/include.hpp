@@ -39,6 +39,8 @@
 # define ON									true
 # define OFF								false
 
+# define UNUSED(X)							(void)(X)
+
 typedef int									t_socket;
 typedef struct sockaddr_in					t_sockaddr_in;
 typedef struct sockaddr						t_sockaddr;

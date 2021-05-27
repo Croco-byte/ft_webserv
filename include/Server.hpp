@@ -62,6 +62,9 @@ class Server
 		bool							requestRequireRedirection(Request);
 		void							generateRedirection(Request request, Response &response);
 
+		bool							requestIsValid(Request request);
+		void							handleRequestErrors(Request request, Response &response);		
+
 };
 
 #endif
