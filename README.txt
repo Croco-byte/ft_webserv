@@ -104,15 +104,15 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 		Sur ce dernier point, c'est plutôt logique car on envoie à la fonction le string vecParam[1], qui n'existe pas car il n'y a pas de virgule sur la ligne.
 		Toujours au niveau des errorPageLocations, on définit par défaut des pages d'erreur pour les codes 2xx et 3xx, ce qui n'est pas nécessaire, ces pages ne seront jamais des erreurs.
 
-[TODO]	Récupérer le contenu du fichier dans la réponse du serveur et l'afficher
+[DONE]	Récupérer le contenu du fichier dans la réponse du serveur et l'afficher
 		Gestion des relative paths (fichiers css par exemple)
 		Gestion de l'autoindex
+
+[DONE]	Finaliser le CGI (petits leaks qui restent)
 
 [TODO]	Gestion des différents headers : notamment le Transfer-Encoding pour le parsing de la requête.
 
 [TODO]	Gestion des pages et des codes d'erreur.
-
-[DONE]	Finaliser le CGI (petits leaks qui restent)
 
 [TODO]	Ajouter un path par défaut pour la configuration.
 

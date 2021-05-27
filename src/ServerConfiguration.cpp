@@ -1,8 +1,13 @@
 #include "ServerConfiguration.hpp"
 
 ServerConfiguration::ServerConfiguration()
- : _name("Default server name"), _host("127.0.0.1"), _port(8080), _limit_body_size(INT_MAX - 1), default_error_page_loc("/error.html")
+ : _name("Default server name"), _host("127.0.0.1"), _port(8080), _limit_body_size(INT_MAX - 1)
 {
+	char cwd[PATH_MAX];
+
+	getcwd(cwd, sizeof(cwd));
+	default_error_page_loc = std::string(&cwd[0]);
+	default_error_page_loc += "/www/error.html";
 	_error_page_locations[400] = default_error_page_loc;
 	_error_page_locations[401] = default_error_page_loc;
 	_error_page_locations[403] = default_error_page_loc;

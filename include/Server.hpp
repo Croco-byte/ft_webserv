@@ -59,6 +59,9 @@ class Server
 		bool							requestRequireCGI(Request request, Route route);
 		void							generateMetaVariables(CGI &cgi, Request &request, Route &route);
 
+		bool							requestRequireRedirection(Request);
+		void							generateRedirection(Request request, Response &response);
+
 };
 
 #endif

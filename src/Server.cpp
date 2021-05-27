@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
+/*   By: yel-alou <yel-alou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/26 16:41:03 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/27 08:49:09 by yel-alou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,9 @@ long				Server::send(long socket)
 	std::string	body = this->generateResponseBody(request);
 	response.setBody(body);
 	response.setHeader("Content-Length", Utils::to_string(body.length()));
+
+	if (requestRequireRedirection(request))
+		generateRedirection(request, response);
 	
 	std::string toSend = response.build();
 
@@ -462,3 +465,23 @@ void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route)
 	cgi.addMetaVariable("HTTP_USER_AGENT", request.getHeaders()["User-Agent"]);
 	cgi.addMetaVariable("HTTP_REFERER", request.getHeaders()["Referer"]);
 }
+
+bool		Server::requestRequireRedirection(Request request)
+{
+	Route			route = findCorrespondingRoute(request.getURL());
+	std::string		targetPath = getLocalPath(request, route);
+
+	if (Utils::isDirectory(targetPath) && targetPath[targetPath.length() - 1] != '/')
+		return (true);
+	return (false);
+}
+
+void		Server::generateRedirection(Request request, Response &response)
+{
+	Route			route = findCorrespondingRoute(request.getURL());
+	std::string		targetPath = getLocalPath(request, route);
+
+	response.setStatus(301);
+	response.setHeader("Location", request.getURL() + "/");
+}
+
