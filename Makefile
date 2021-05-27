@@ -1,28 +1,39 @@
-SRCS			=	src/main.cpp  \
-					src/utils/file.cpp \
-					src/utils/time.cpp  \
-					src/utils/quit.cpp   \
-					src/utils/string.cpp  \
-					src/Server.cpp \
-					src/Request.cpp  \
-					src/Response.cpp  \
-					src/ServerConfiguration.cpp \
-					src/Route.cpp \
-					src/Webserv.cpp \
-					src/ConnexionManager.cpp \
-					src/CGI.cpp \
-					src/AutoIndex.cpp
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: user42 <user42@student.42.fr>              +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2021/05/27 17:52:43 by user42            #+#    #+#              #
+#    Updated: 2021/05/27 17:57:33 by user42           ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
-OBJS			= $(SRCS:.cpp=.o)
+NAME			= webserv
 
 CC				= g++
 RM				= rm -f
 INCLUDE			= -I./include/
 CFLAGS			= -Wall -Werror -Wextra -std=c++98 -g -fsanitize=address
-# -std=c++98
-LIBS			= 
 
-NAME			= webserv
+CGI= CGI
+CORE= ConnexionManager main Webserv
+REQUEST= Request
+RESPONSE= AutoIndex Response
+SERVER= Route ServerConfiguration Server
+UTILS= file quit string time
+
+SRCS =	$(addsuffix .cpp, $(addprefix src/cgi/, $(CGI))) \
+		$(addsuffix .cpp, $(addprefix src/core/, $(CORE))) \
+		$(addsuffix .cpp, $(addprefix src/request/, $(REQUEST))) \
+		$(addsuffix .cpp, $(addprefix src/response/, $(RESPONSE))) \
+		$(addsuffix .cpp, $(addprefix src/server/, $(SERVER))) \
+		$(addsuffix .cpp, $(addprefix src/utils/, $(UTILS)))
+
+
+OBJS			= $(SRCS:.cpp=.o)
+
 
 all:			$(NAME)
 				clear
@@ -32,7 +43,7 @@ all:			$(NAME)
 				${CC} -c ${CFLAGS} ${INCLUDE} $< -o $@
 
 $(NAME):		$(OBJS)
-				${CC} $(OBJS) ${INCLUDE} ${CFLAGS} ${LIBS} -o $(NAME)
+				${CC} $(OBJS) ${INCLUDE} ${CFLAGS} -o $(NAME)
 
 clean:
 				$(RM) ${OBJS}

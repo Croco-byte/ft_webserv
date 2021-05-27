@@ -113,6 +113,8 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 [TODO]	Gestion des différents headers : notamment le Transfer-Encoding pour le parsing de la requête.
 
 [TODO]	Gestion des pages et des codes d'erreur.
+		Gestion des pages d'erreur par défaut, qui sont hardcodées sur NGINX
+		Il faut qu'on code en dur les pages d'erreur par défaut : il y aura forcément des cas où la page 404.html par défaut ne sera pas trouvée par le client (car la personne qui a installé le serveur n'a pas placé le fichier au bon endroit typiquement) : à ce moment, il faudra forcément afficher qqchose.
 
 [TODO]	Ajouter un path par défaut pour la configuration.
 

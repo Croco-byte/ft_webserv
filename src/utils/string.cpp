@@ -1,4 +1,4 @@
-#include "include.hpp"
+#include "utils/include.hpp"
 
 namespace Utils
 {
@@ -14,8 +14,23 @@ namespace Utils
 			if (!token.empty())
 				tokens.push_back(token);
 			prev = pos + delim.length();
-		}
-		while (pos < str.length() && prev < str.length());
+		} while (pos < str.length() && prev < str.length());
+		return tokens;
+	}
+
+	std::vector<std::string> split_any(const std::string& str, const std::string& delim)
+	{
+		std::vector<std::string> tokens;
+		size_t prev = 0, pos = 0;
+		do
+		{
+			pos = str.find_first_of(delim, prev);
+			if (pos == std::string::npos) pos = str.length();
+			std::string token = str.substr(prev, pos-prev);
+			if (!token.empty())
+				tokens.push_back(token);
+			prev = pos + 1;
+		} while (pos < str.length() && prev < str.length());
 		return tokens;
 	}
 
