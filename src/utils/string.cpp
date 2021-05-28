@@ -285,4 +285,17 @@ namespace Utils
 				return (false);
 		return (true);
 	}
+
+	std::string					replace(std::string src, std::string search, std::string replace)
+	{
+		for (size_t pos = 0; ; pos += replace.length())
+		{
+			pos = src.find(search, pos);
+			if (pos == std::string::npos)
+				break ;
+			src.erase(pos, search.length());
+			src.insert(pos, replace);
+		}
+		return (src);
+	}
 }

@@ -14,7 +14,18 @@
 
 Route::Route()
  : _require_auth(false)
-{}
+{
+	// A VERIFIER
+	_accepted_methods.push_back("GET");
+	_accepted_methods.push_back("POST");
+	// _accepted_methods.push_back("PUT");
+	// _accepted_methods.push_back("HEAD");
+	// _accepted_methods.push_back("DELETE");
+	// _accepted_methods.push_back("CONNECT");
+	// _accepted_methods.push_back("OPTIONS");
+	// _accepted_methods.push_back("TRACE");
+	// _accepted_methods.push_back("PATCH");
+}
 
 Route::Route(const Route &x)
 {
@@ -141,4 +152,12 @@ std::ostream	&operator<<(std::ostream &stream, Route const & route)
 			<< "    - auth id               : " << route.getAuthId() << std::endl
 			<< "    - auth pass             : " << route.getAuthPass() << std::endl;
 	return (stream);
+}
+
+bool	Route::acceptMethod(std::string method)
+{
+	for (std::vector<std::string>::iterator it = _accepted_methods.begin(); it != _accepted_methods.end(); it++)
+		if (Utils::to_lower(*it) == Utils::to_lower(method))
+			return (true);
+	return (false);
 }

@@ -40,6 +40,8 @@ class Server
 		long							_fd;
 		t_sockaddr_in					_addr;
 		std::map<long, std::string>		_requests;
+		std::string						_hardcoded_error_page;
+		int								_error_code;
 
 		/* PRIVATE HELPERS : RESPONSE BODY HANDLERS */
 		std::string						generateResponseBody(Request const & request);
@@ -64,6 +66,10 @@ class Server
 
 		bool							requestIsValid(Request request);
 		void							handleRequestErrors(Request request, Response &response);		
+		bool							isAuthorized(Request request);
+		bool							isMethodAccepted(Request request);
+
+		std::string						getCodeMessage(int code);
 
 };
 

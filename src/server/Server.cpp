@@ -16,7 +16,13 @@
 ** ------ CONSTRUCTORS / DESTRUCTOR ------
 */
 Server::Server()
-{}
+ : _error_code(0)
+{
+	_hardcoded_error_page = "<html>\r\n"
+"<head><title>error_code</title></head>\r\n"
+"<body>\r\n"
+"<center><h1>error_code</h1></center></body></html>";
+}
 
 Server::Server(const Server &x)
 {
@@ -24,10 +30,13 @@ Server::Server(const Server &x)
 	_addr = x._addr;
 	_requests = x._requests;
 	_config = x._config;
+	_hardcoded_error_page = x._hardcoded_error_page;
 }
 
 Server::~Server()
-{}
+{
+
+}
 
 
 
@@ -93,8 +102,8 @@ void				Server::clean(void)
 */
 long				Server::send(long socket)
 {
-	Request		request;
-	Response	response;
+	Request			request;
+	Response		response;
 
 	std::string request_str = _requests[socket];
 	_requests.erase(socket);
@@ -350,7 +359,6 @@ void	Server::handleAuthorization(Request request, std::vector<std::string> vecDa
 	id = vecCredentials[0];
 	password = vecCredentials[1];
 	Console::info("Trying to connect with : " + id + ":" + password);
-
 }
 
 /*
@@ -477,8 +485,11 @@ bool		Server::requestRequireRedirection(Request request)
 	Route			route = findCorrespondingRoute(request.getURL());
 	std::string		targetPath = getLocalPath(request, route);
 
-	if (Utils::isDirectory(targetPath) && targetPath[targetPath.length() - 1] != '/')
+	if (Utils::isDirectory(targetPath) && request.getURL()[request.getURL().length() - 1] != '/')
+	{
+		Console::error("Require redirection on " + request.getURL() + "  => " + targetPath);
 		return (true);
+	}
 	return (false);
 }
 
@@ -498,7 +509,20 @@ bool		Server::requestIsValid(Request request)
 	std::string		targetPath = getLocalPath(request, route);
 
 	if (!Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
+	{
+		_error_code = 404;
 		return (false);
+	}
+	else if (!this->isAuthorized(request))
+	{
+		_error_code = 401;
+		return (false);
+	}
+	else if (!this->isMethodAccepted(request))
+	{
+		_error_code = 405;
+		return (false);
+	}
 	return (true);
 }
 
@@ -507,13 +531,79 @@ void		Server::handleRequestErrors(Request request, Response &response)
 	Route			route = findCorrespondingRoute(request.getURL());
 	std::string		targetPath = getLocalPath(request, route);
 
-	if (!Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
+	response.setStatus(_error_code);
+	response.setBody(Utils::replace(_hardcoded_error_page, "error_code", Utils::to_string(_error_code) + " " + this->getCodeMessage(_error_code)));
+	return ;
+}
+
+bool		Server::isAuthorized(Request request)
+{
+	Route			route = findCorrespondingRoute(request.getURL());
+	std::string		targetPath = getLocalPath(request, route);
+
+	if (!route.requireAuth())
+		return (true);
+
+	if (request.getHeaders().find("Authorization") == request.getHeaders().end())
+		return (false);
+
+	std::string					type;
+	std::string					id;
+	std::string					password;
+	std::string					decoded;
+	std::vector<std::string>	vecCredentials;
+	std::vector<std::string>	vecData;
+
+	vecData = Utils::split(request.getHeaders().find("Authorization")->second, " ");
+	if (vecData.size() <= 1)
 	{
-		Console::error("404");
-		response.setStatus(404);
-		Console::info(_config.getErrorPageLocation(404));
-		Console::info(this->get404Page());
-		response.setBody(this->get404Page());
-		return ;
+		Console::error("Wrong format for authorization header");
+		return (false);
 	}
+
+	type = Utils::to_lower(vecData[0]);
+	decoded = Utils::base64_decode(vecData[1]);
+	vecCredentials = Utils::split(decoded, ":");
+	id = vecCredentials[0];
+	password = vecCredentials[1];
+	Console::info("Trying to connect with : " + id + ":" + password);
+	Console::info("Route auth credentials : " + route.getAuthId() + ":" + route.getAuthPass());
+	if (id != route.getAuthId() || password != route.getAuthPass())
+		return (false);
+	return (true);
+}
+
+bool		Server::isMethodAccepted(Request request)
+{
+	Route			route = findCorrespondingRoute(request.getURL());
+
+	return (route.acceptMethod(request.getMethod()));
+}
+
+std::string	Server::getCodeMessage(int code)
+{
+	std::map<int, std::string>	code_explications;
+	code_explications[200] = "OK";
+	code_explications[201] = "Created";
+	code_explications[202] = "Accepted";
+	code_explications[204] = "No Content";
+	code_explications[300] = "Multiple Choices";
+	code_explications[301] = "Moved Permanently";
+	code_explications[302] = "Found";
+	code_explications[310] = "Too many Redirects";
+	code_explications[400] = "Bad request";
+	code_explications[401] = "Unauthorized";
+	code_explications[403] = "Forbidden";
+	code_explications[404] = "Not Found";
+	code_explications[405] = "Method Not Allowed";
+	code_explications[406] = "Non acceptable";
+	code_explications[413] = "Request Entity Too Large";
+	code_explications[500] = "Internal Server Error";
+	code_explications[501] = "Not Implemented";
+	code_explications[502] = "Bad Gateway";
+	code_explications[503] = "Service Unavailable";
+
+	if (code_explications.find(code) == code_explications.end())
+		return ("");
+	return (code_explications[code]);
 }
