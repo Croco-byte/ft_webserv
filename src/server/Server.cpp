@@ -6,16 +6,17 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/28 15:01:56 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/28 17:44:21 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server/Server.hpp"
 
-/*s
+/*
 ** ------ CONSTRUCTORS / DESTRUCTOR ------
 */
 Server::Server()
+ : _error_code(0)
 {}
 
 Server::Server(const Server &x)
@@ -24,11 +25,11 @@ Server::Server(const Server &x)
 	_addr = x._addr;
 	_requests = x._requests;
 	_config = x._config;
+	_error_code = x._error_code;
 }
 
 Server::~Server()
 {}
-
 
 
 /*
@@ -93,8 +94,8 @@ void				Server::clean(void)
 */
 long				Server::send(long socket)
 {
-	Request		request;
-	Response	response;
+	Request			request;
+	Response		response;
 
 	std::string request_str = _requests[socket];
 	_requests.erase(socket);
@@ -174,18 +175,6 @@ void	Server::load(ServerConfiguration conf)
 { _config = conf; }
 
 
-
-/*
-** ------ GET ERROR PAGES ------
-*/
-std::string				Server::get404Page(void)
-{ return (Utils::getFileContent(_config.getErrorPageLocation(404))); }
-
-std::string				Server::get401Page(void)
-{ return (Utils::getFileContent(_config.getErrorPageLocation(401))); }
-
-
-
 /*
 ** ------ PRIVATE HELPERS : RESPONSE BODY HANDLERS ------
 */
@@ -196,26 +185,20 @@ std::string			Server::generateResponseBody(Request const & request)
 
 	if (this->requestRequireCGI(request, route))
 		return (this->execCGI(request));
-
-	Console::info("Target path = " + targetPath);
-	if (!Utils::pathExists(targetPath))
-		return (get404Page());
 	if (Utils::isDirectory(targetPath))
 	{
 		std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
 		if (Utils::pathExists(indexPath) && Utils::isRegularFile(indexPath))
-			return (Utils::getFileContent(indexPath));										// There is an index file for this directory : we display it.
-		if (route.autoIndex())																// Else, if directory listing is enabled, we display listing.
+			return (Utils::getFileContent(indexPath));
+		else if (route.autoIndex())
 		{
 			AutoIndex autoindex(request.getURL(), targetPath);
 			autoindex.createIndex();
 			return (autoindex.getIndex());
 		}
-		else																				// Else, display a 403 Forbidden (TODO : replace 404 by 403 !)
-			return (get404Page());
+		else
+			return (_config.getErrorPage(403));
 	}
-	if (!Utils::pathExists(targetPath) || !Utils::isRegularFile(targetPath))
-			return (get404Page());
 	return(Utils::getFileContent(targetPath));
 }
 
@@ -233,38 +216,6 @@ void				Server::handleRequestHeaders(Request request, Response &response)
 			this->handleCharset(Utils::split(it->second, ","), response);
 		else if (it->first == "Accept-Language")
 			this->handleLanguage(request, Utils::split(it->second, ","), response);
-/*		else if (it->first == "Allow")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Authorization")
-			this->handleAuthorization(request, Utils::split(it->second, " "), response);
-		else if (it->first == "Content-Language")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Content-Length")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Content-Location")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Content-Type")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Date")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Host")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Last-Modified")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Location")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Referer")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Retry-After")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Server")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "Transfer-Encoding")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "User-Agent")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl;
-		else if (it->first == "WWW-Authenticate")
-			// std::cout << "Handle " << it->first << " : " << it->second << std::endl; */
 	}
 }
 
@@ -459,8 +410,11 @@ bool		Server::requestRequireRedirection(Request request)
 	Route			route = findCorrespondingRoute(request.getURL());
 	std::string		targetPath = getLocalPath(request, route);
 
-	if (Utils::isDirectory(targetPath) && targetPath[targetPath.length() - 1] != '/')
+	if (Utils::isDirectory(targetPath) && request.getURL()[request.getURL().length() - 1] != '/')
+	{
+		Console::error("Require redirection on " + request.getURL() + "  => " + targetPath);
 		return (true);
+	}
 	return (false);
 }
 
@@ -483,7 +437,15 @@ bool		Server::requestIsValid(Request request)
 	std::string		targetPath = getLocalPath(request, route);
 
 	if (!Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
+	{
+		_error_code = 404;
 		return (false);
+	}
+	else if (!this->isMethodAccepted(request))
+	{
+		_error_code = 405;
+		return (false);
+	}
 	return (true);
 }
 
@@ -492,26 +454,26 @@ void		Server::handleRequestErrors(Request request, Response &response)
 	Route			route = findCorrespondingRoute(request.getURL());
 	std::string		targetPath = getLocalPath(request, route);
 
-	if (!Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
-	{
-		Console::error("404");
-		response.setStatus(404);
-		Console::info(_config.getErrorPageLocation(404));
-		Console::info(this->get404Page());
-		response.setBody(this->get404Page());
-		return ;
-	}
+	response.setStatus(_error_code);
+	response.setBody(_config.getErrorPage(_error_code));
+}
+
+bool		Server::isMethodAccepted(Request request)
+{
+	Route			route = findCorrespondingRoute(request.getURL());
+
+	return (route.acceptMethod(request.getMethod()));
 }
 
 
 /*
-** ------ PRIVATE HELPERS : UNAUTHORIZED REQUESTS HANDLERS ------
+** ------ PRIVATE HELPERS : AUTHORIZATION HANDLERS ------
 */
 void		Server::handleUnauthorizedRequests(Response & response)
 {
 	response.setStatus(401);
 	response.setHeader("www-authenticate","Basic realm=\"HTTP auth required\"");
-	response.setBody(this->get401Page());
+	response.setBody(_config.getErrorPage(401));
 }
 
 bool		Server::credentialsMatch(std::string const & requestAuthHeader, std::string const & userFile)

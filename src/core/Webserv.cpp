@@ -176,7 +176,7 @@ bool						Webserv::handleServerConfLine(std::string const & line, ServerConfigur
 		else if (instruction == "error")
 		{
 			if (params.size() == 2 && Utils::is_positive_number(params[1]))
-				conf.addErrorPageLocation(std::atoi(params[1].c_str()), params[0]);
+				conf.addCustomErrorPage(std::atoi(params[1].c_str()), params[0]);
 			else
 				return (false);
 		}

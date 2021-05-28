@@ -47,6 +47,8 @@ class	Route
 		std::string const &							getUploadDir(void) const;
 		std::string const &							getUserFile(void) const;
 
+		bool										acceptMethod(std::string method);
+
 	private:
 		std::vector<std::string>	_accepted_methods;
 		std::vector<std::string>	_cgi_extensions;

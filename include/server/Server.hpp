@@ -31,16 +31,13 @@ class Server
 		void							load(ServerConfiguration config);
 		ServerConfiguration				getConfiguration() const;
 
-		/* GET ERROR PAGES */
-		std::string				get404Page(void);
-		std::string				get401Page(void);
-
 
 	private:
 		ServerConfiguration				_config;
 		long							_fd;
 		t_sockaddr_in					_addr;
 		std::map<long, std::string>		_requests;
+		int								_error_code;
 
 		/* PRIVATE HELPERS : RESPONSE BODY HANDLERS */
 		std::string						generateResponseBody(Request const & request);
@@ -65,9 +62,10 @@ class Server
 
 		/* PRIVATE HELPERS : ERRORS HANDLERS */
 		bool							requestIsValid(Request request);
+		bool							isMethodAccepted(Request request);
 		void							handleRequestErrors(Request request, Response &response);
 
-		/* PRIVATE HELPERS : UNAUTHORIZED REQUESTS HANDLERS*/
+		/* PRIVATE HELPERS : AUTHORIZATION HANDLERS*/
 		void							handleUnauthorizedRequests(Response & response);
 		bool							credentialsMatch(std::string const & requestAuthHeader, std::string const & userFile);
 
