@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/27 18:01:11 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/28 15:01:56 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,17 +100,20 @@ long				Server::send(long socket)
 	_requests.erase(socket);
 	request.load(request_str);
 
-	this->handleRequestHeaders(request, response);
-	if (!this->requestIsValid(request))
-		this->handleRequestErrors(request, response);
+	Route		route = findCorrespondingRoute(request.getURL());
 
+	this->handleRequestHeaders(request, response);
+	
+	if (route.requireAuth() && !request.hasAuthHeader())
+		this->handleUnauthorizedRequests(response);
+	else if (route.requireAuth() && request.hasAuthHeader() && !this->credentialsMatch(request.getHeaders()["Authorization"], route.getUserFile()))
+		this->handleUnauthorizedRequests(response);
+	else if (!this->requestIsValid(request))
+		this->handleRequestErrors(request, response);
 	else if (requestRequireRedirection(request))
 		this->generateRedirection(request, response);
 	else
-	{
-		std::string	body = this->generateResponseBody(request);
-		response.setBody(body);
-	}
+		response.setBody(this->generateResponseBody(request));
 	
 	response.setHeader("Content-Length", Utils::to_string(response.getBody().length()));
 	std::string toSend = response.build();
@@ -175,10 +178,11 @@ void	Server::load(ServerConfiguration conf)
 /*
 ** ------ GET ERROR PAGES ------
 */
-std::string			Server::get404Page(void)
-{
-	return (Utils::getFileContent(_config.getErrorPageLocation(404)));						// A rectifier en fonction des error pages locations par la suite.
-}
+std::string				Server::get404Page(void)
+{ return (Utils::getFileContent(_config.getErrorPageLocation(404))); }
+
+std::string				Server::get401Page(void)
+{ return (Utils::getFileContent(_config.getErrorPageLocation(401))); }
 
 
 
@@ -327,31 +331,6 @@ void	Server::handleLanguage(Request request, std::vector<std::string> vecLang, R
 	}
 }
 
-void	Server::handleAuthorization(Request request, std::vector<std::string> vecData, Response &response)
-{
-	std::string					type;
-	std::string					id;
-	std::string					password;
-	std::string					decoded;
-	std::vector<std::string>	vecCredentials;
-
-	(void)response;
-	(void)request;
-
-	if (vecData.size() <= 1)
-	{
-		Console::error("Wrong format for authorization header");
-		return ;
-	}
-
-	type = Utils::to_lower(vecData[0]);
-	decoded = Utils::base64_decode(vecData[1]);
-	vecCredentials = Utils::split(decoded, ":");
-	id = vecCredentials[0];
-	password = vecCredentials[1];
-	Console::info("Trying to connect with : " + id + ":" + password);
-
-}
 
 /*
 ** ------ PRIVATE HELPERS : URL HANDLERS ------
@@ -390,7 +369,6 @@ std::string	Server::getLocalPath(Request request, Route route)
 	if (route.getRoute() != "/")
 		localPath.erase(localPath.find(route.getRoute()), route.getRoute().length());
 
-	// Si y a pas de "/" séparateur on rajoute
 	if (route.getLocalURL()[route.getLocalURL().length() - 1] != '/' && localPath[0] != '/')
 		localPath = "/" + localPath;
 	else if (route.getLocalURL()[route.getLocalURL().length() - 1] == '/' && localPath[0] == '/')
@@ -472,6 +450,10 @@ void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route)
 	cgi.addMetaVariable("HTTP_REFERER", request.getHeaders()["Referer"]);
 }
 
+
+/*
+** ------ PRIVATE HELPERS : REDIRECTION HANDLERS ------
+*/
 bool		Server::requestRequireRedirection(Request request)
 {
 	Route			route = findCorrespondingRoute(request.getURL());
@@ -492,6 +474,9 @@ void		Server::generateRedirection(Request request, Response &response)
 }
 
 
+/*
+** ------ PRIVATE HELPERS : ERRORS HANDLERS ------
+*/
 bool		Server::requestIsValid(Request request)
 {
 	Route			route = findCorrespondingRoute(request.getURL());
@@ -516,4 +501,35 @@ void		Server::handleRequestErrors(Request request, Response &response)
 		response.setBody(this->get404Page());
 		return ;
 	}
+}
+
+
+/*
+** ------ PRIVATE HELPERS : UNAUTHORIZED REQUESTS HANDLERS ------
+*/
+void		Server::handleUnauthorizedRequests(Response & response)
+{
+	response.setStatus(401);
+	response.setHeader("www-authenticate","Basic realm=\"HTTP auth required\"");
+	response.setBody(this->get401Page());
+}
+
+bool		Server::credentialsMatch(std::string const & requestAuthHeader, std::string const & userFile)
+{
+	std::string					fileContent = Utils::getFileContent(userFile);
+	std::vector<std::string>	fileCreds;
+	std::string					requestCreds = Utils::base64_decode((Utils::split_any(requestAuthHeader, " 	"))[1]);
+
+	if (fileContent.empty())
+	{
+		Console::error("Couldn't get credentials from auth_basic_user_file " + userFile + " : file is empty, or doesn't exist.");
+		return (false);
+	}
+	fileCreds = Utils::split(fileContent, "\n");
+	for (std::vector<std::string>::iterator it = fileCreds.begin(); it != fileCreds.end(); it++)
+	{
+		if (*it == requestCreds)
+			return (true);
+	}
+	return (false);
 }

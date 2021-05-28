@@ -33,6 +33,7 @@ class Server
 
 		/* GET ERROR PAGES */
 		std::string				get404Page(void);
+		std::string				get401Page(void);
 
 
 	private:
@@ -48,22 +49,27 @@ class Server
 		void							handleRequestHeaders(Request request, Response &reponse);
 		void							handleCharset(std::vector<std::string> vecCharset, Response &response);
 		void							handleLanguage(Request request, std::vector<std::string> vecLang, Response &response);
-		void							handleAuthorization(Request request, std::vector<std::string> vecData, Response &response);
 
 		/* PRIVATE HELPERS : URL HANDLERS */
 		Route							findCorrespondingRoute(std::string url);
 		std::string						getLocalPath(Request request, Route route);
 
 		/* PRIVATE HELPERS : CGI HANDLERS */
-		std::string						execCGI(Request request);											// Make it return a string, which should be the output of the CGI binary
+		std::string						execCGI(Request request);
 		bool							requestRequireCGI(Request request, Route route);
 		void							generateMetaVariables(CGI &cgi, Request &request, Route &route);
 
+		/* PRIVATE HELPERS : REDIRECTION HANDLERS*/
 		bool							requestRequireRedirection(Request);
 		void							generateRedirection(Request request, Response &response);
 
+		/* PRIVATE HELPERS : ERRORS HANDLERS */
 		bool							requestIsValid(Request request);
-		void							handleRequestErrors(Request request, Response &response);		
+		void							handleRequestErrors(Request request, Response &response);
+
+		/* PRIVATE HELPERS : UNAUTHORIZED REQUESTS HANDLERS*/
+		void							handleUnauthorizedRequests(Response & response);
+		bool							credentialsMatch(std::string const & requestAuthHeader, std::string const & userFile);
 
 };
 

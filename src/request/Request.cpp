@@ -110,6 +110,13 @@ void				Request::setIP(std::string ip)
 	_ip = ip;
 }
 
+bool				Request::hasAuthHeader(void) const
+{
+	if (this->headers.find("Authorization") != this->headers.end())
+		return (true);
+	return (false);
+}
+
 std::string			Request::getIP() const
 {
 	return (_ip);

@@ -58,7 +58,7 @@ bool						Webserv::isValidRouteDirective(std::string const & directive) const
 {
 	if (directive == "root" || directive == "index" || directive == "autoindex"
 		|| directive == "upload_dir" || directive == "cgi_extension" || directive == "cgi_bin"
-		|| directive == "methods" || directive == "auth")
+		|| directive == "methods" || directive == "auth_basic" || directive == "auth_basic_user_file")
 		return (true);
 	return (false);
 }
@@ -263,17 +263,10 @@ bool						Webserv::handleRouteLine(std::string const & line, Route & route)
 			route.setCGIBinary(params[0]);
 		else if (instruction == "methods")
 			route.setAcceptedMethods(params);
-		else if (instruction == "auth")
-		{
-			std::vector<std::string> vec = Utils::split(params[0], ":");
-			if (vec.size() != 2)
-				return (false);
-			else
-			{
-				route.setAuthId(vec[0]);
-				route.setAuthPass(vec[1]);
-			}
-		}
+		else if (instruction == "auth_basic" && params[0] == "on")
+			route.enableRequireAuth();
+		else if (instruction == "auth_basic_user_file")
+			route.setUserFile(params[0]);
 		return (true);
 	}
 	return (false);

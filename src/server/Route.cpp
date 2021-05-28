@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/27 17:58:43 by user42            #+#    #+#             */
-/*   Updated: 2021/05/27 17:58:45 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/28 13:11:49 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,8 +27,7 @@ Route::Route(const Route &x)
 	_cgi_extensions = x._cgi_extensions;
 	_upload_dir = x._upload_dir;
 	_require_auth = x._require_auth;
-	_auth_id = x._auth_id;
-	_auth_pass = x._auth_pass;
+	_auth_basic_user_file = x._auth_basic_user_file;
 }
 
 Route::~Route()
@@ -82,14 +81,9 @@ void								Route::addCGIExtension(std::string const & ext)
 void								Route::setUploadDir(std::string const & dir)
 { _upload_dir = dir; }
 
-void								Route::setAuthId(std::string const & id)
-{
-	_auth_id = id;
-	_require_auth = true;
-}
+void								Route::setUserFile(std::string const & file)
+{ _auth_basic_user_file = file; }
 
-void								Route::setAuthPass(std::string const & pass)
-{ _auth_pass = pass; }
 
 std::vector<std::string> const &	Route::getAcceptedMethods(void) const
 { return (_accepted_methods); }
@@ -118,11 +112,8 @@ std::string const &					Route::getCGIBinary(void) const
 std::string const &					Route::getUploadDir(void) const
 { return (_upload_dir); }
 
-std::string const &					Route::getAuthId(void) const
-{ return (_auth_id); }
-
-std::string const &					Route::getAuthPass(void) const
-{ return (_auth_pass); }
+std::string const &					Route::getUserFile(void) const
+{ return (_auth_basic_user_file); }
 
 std::ostream	&operator<<(std::ostream &stream, Route const & route)
 {
@@ -132,13 +123,12 @@ std::ostream	&operator<<(std::ostream &stream, Route const & route)
 			<< "    - accepted methods      : " << Utils::join(route.getAcceptedMethods()) << std::endl
 			<< "    - cgi extensions        : " << Utils::join(route.getCGIExtensions()) << std::endl
 			<< "    - require auth          : " << Utils::colorify(route.requireAuth()) << std::endl
+			<< "    - auth_user_file        : " << route.getUserFile() << std::endl
 			<< "    - auto index            : " << Utils::colorify(route.autoIndex()) << std::endl
 			<< "    - index                 : " << route.getIndex() << std::endl
 			<< "    - route                 : " << route.getRoute() << std::endl
 			<< "    - local URL             : " << route.getLocalURL() << std::endl
 			<< "    - CGI Binary            : " << route.getCGIBinary() << std::endl
-			<< "    - upload dir            : " << route.getUploadDir() << std::endl
-			<< "    - auth id               : " << route.getAuthId() << std::endl
-			<< "    - auth pass             : " << route.getAuthPass() << std::endl;
+			<< "    - upload dir            : " << route.getUploadDir() << std::endl;
 	return (stream);
 }

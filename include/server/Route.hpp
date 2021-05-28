@@ -34,8 +34,7 @@ class	Route
 		void										setCGIExtensions(std::vector<std::string> const & ext);
 		void										addCGIExtension(std::string const & ext);
 		void										setUploadDir(std::string const & dir);
-		void										setAuthId(std::string const & id);
-		void										setAuthPass(std::string const & pass);
+		void										setUserFile(std::string const & file);
 
 		std::vector<std::string> const &			getAcceptedMethods(void) const;
 		std::vector<std::string> const &			getCGIExtensions(void) const;
@@ -46,8 +45,7 @@ class	Route
 		std::string const &							getLocalURL(void) const;
 		std::string const &							getCGIBinary(void) const;
 		std::string const &							getUploadDir(void) const;
-		std::string const &							getAuthId(void) const;
-		std::string const &							getAuthPass(void) const;
+		std::string const &							getUserFile(void) const;
 
 	private:
 		std::vector<std::string>	_accepted_methods;
@@ -59,8 +57,7 @@ class	Route
 		std::string					_local_url;
 		std::string					_cgi_bin;
 		std::string					_upload_dir;
-		std::string					_auth_id;
-		std::string					_auth_pass;
+		std::string					_auth_basic_user_file;
 };
 
 std::ostream	&operator<<(std::ostream &stream, Route const & route);

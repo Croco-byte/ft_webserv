@@ -6,7 +6,7 @@
 #    By: user42 <user42@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/05/27 17:52:43 by user42            #+#    #+#              #
-#    Updated: 2021/05/27 17:57:33 by user42           ###   ########.fr        #
+#    Updated: 2021/05/28 13:11:16 by user42           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ NAME			= webserv
 CC				= g++
 RM				= rm -f
 INCLUDE			= -I./include/
-CFLAGS			= -Wall -Werror -Wextra -std=c++98 -g -fsanitize=address
+CFLAGS			= -Wall -Werror -Wextra -std=c++98 -g3 -fsanitize=address
 
 CGI= CGI
 CORE= ConnexionManager main Webserv
