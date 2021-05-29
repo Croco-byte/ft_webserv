@@ -120,7 +120,16 @@ void	Webserv::createServer(ConfIterator start, ConfIterator end)
 			parseServerConfLine(*start, conf);
 	}
 	std::cout << conf << std::endl;
-	server.load(conf);
+
+	for (std::vector<Server>::iterator it = _manager.getServers().begin(); it != _manager.getServers().end(); it++)
+	{
+		if ((*it).getDefaultVHConfig().getHost() == conf.getHost() && (*it).getDefaultVHConfig().getPort() == conf.getPort())
+		{
+			(*it).addVirtualHost(conf);
+			return ;
+		}
+	}
+	server.addVirtualHost(conf);
 	_manager.addServer(server);
 }
 

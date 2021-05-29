@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 10:19:29 by user42            #+#    #+#             */
-/*   Updated: 2021/05/27 17:50:48 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/29 13:17:05 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,10 @@ class	ConnexionManager
 		void					clean(void);
 
 		/* --- UTILITY FUNCTIONS --- */
-		void					addServer(Server toAdd);
+		void							addServer(Server toAdd);
 
+		/* --- GETTERS | SETTERS ---*/
+		std::vector<Server> &		getServers(void);
 
 	private:
 		ConnexionManager(ConnexionManager const & src);

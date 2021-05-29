@@ -112,14 +112,15 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 
 [TODO]	Gestion des différents headers : notamment le Transfer-Encoding pour le parsing de la requête.
 
-[TODO]	Gestion des pages et des codes d'erreur.
-		Gestion des pages d'erreur par défaut, qui sont hardcodées sur NGINX
-		Il faut qu'on code en dur les pages d'erreur par défaut : il y aura forcément des cas où la page 404.html par défaut ne sera pas trouvée par le client (car la personne qui a installé le serveur n'a pas placé le fichier au bon endroit typiquement) : à ce moment, il faudra forcément afficher qqchose.
+[DONE]	Gestion des pages et des codes d'erreur.
+		Gestion des pages d'erreur par défaut hardcodées.
 
 [TODO]	Valider le fichier de configuration
 
-[TODP]	CGI : prefixe HTTP_ pour les headers
+[TODO]	CGI : prefixe HTTP_ pour les headers
+		Firefox qui n'exécute pas les fichiers PHP mais propose de les télécharger.
 
 [TODO]	Ajouter un path par défaut pour la configuration.
 
-[TODO]	Gestion des server_names et du serveur par défaut.
+[DONE]	Gestion des server_names (virtualHosts) et serveur par défaut
+[TODO]	Gérer le cas particulier du port 80 pour les virtualHosts.

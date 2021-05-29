@@ -6,13 +6,13 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/27 17:58:54 by user42            #+#    #+#             */
-/*   Updated: 2021/05/28 17:42:11 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/29 13:36:37 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server/ServerConfiguration.hpp"
 
-ServerConfiguration::ServerConfiguration() : _name("Default server name"), _host("127.0.0.1"), _port(8080), _limit_body_size(INT_MAX - 1), _server_root("/")
+ServerConfiguration::ServerConfiguration() : _is_default(true), _host("127.0.0.1"), _name(""), _port(8080), _limit_body_size(INT_MAX - 1), _server_root("/")
 {
 	_default_error_content = "<html>\r\n"
 	"<head><title>error_code</title></head>\r\n"
@@ -25,6 +25,7 @@ ServerConfiguration::ServerConfiguration() : _name("Default server name"), _host
 
 ServerConfiguration::ServerConfiguration(const ServerConfiguration &x)
 {
+	_is_default = x._is_default;
 	_name = x._name;
 	_host = x._host;
 	_errors = x._errors;
@@ -72,6 +73,8 @@ void									ServerConfiguration::init_default_error_content(void)
 		_error_content[it->first] = Utils::replace(_default_error_content, "error_code", (Utils::to_string(it->first) + " " + it->second));
 }
 
+void									ServerConfiguration::setDefault(bool isDefault)
+{ _is_default = isDefault; }
 
 void									ServerConfiguration::setName(std::string const & name)
 { _name = name; }
@@ -117,6 +120,9 @@ std::string const &						ServerConfiguration::getServerRoot() const
 
 std::vector<Route> const &				ServerConfiguration::getRoutes() const
 { return (_vecRoutes); }
+
+bool									ServerConfiguration::isDefault(void) const
+{ return (_is_default); }
 
 std::string								ServerConfiguration::getErrorExplanation(int code) const
 {

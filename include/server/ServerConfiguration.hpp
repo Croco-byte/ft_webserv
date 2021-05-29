@@ -11,6 +11,7 @@ class	ServerConfiguration
 		ServerConfiguration(const ServerConfiguration &cpy);
 		~ServerConfiguration();
 
+		void									setDefault(bool isDefault);
 		void									setName(std::string const & name);
 		void									setHost(std::string const & host);
 		void									addCustomErrorPage(int code, std::string location);
@@ -25,13 +26,15 @@ class	ServerConfiguration
 		int										getLimit()														const;
 		std::string const &						getServerRoot(void)												const;
 		std::vector<Route> const &				getRoutes()														const;
-		
+		bool									isDefault(void)													const;
+
 		std::string								getErrorExplanation(int code)									const;
 		std::string								getErrorPage(int code)											const;
 
 	private:
-		std::string					_name;
+		bool						_is_default;
 		std::string					_host;
+		std::string					_name;
 		std::map<int, std::string>	_errors;
 		std::map<int, std::string>	_error_content;
 		std::string					_default_error_content;

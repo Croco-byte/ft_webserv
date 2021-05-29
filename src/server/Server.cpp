@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/28 17:44:21 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/29 15:11:37 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,8 @@ Server::Server(const Server &x)
 	_fd = x._fd;
 	_addr = x._addr;
 	_requests = x._requests;
-	_config = x._config;
+	if (!x._virtualHosts.empty())
+		_virtualHosts = x._virtualHosts;
 	_error_code = x._error_code;
 }
 
@@ -62,12 +63,12 @@ int		Server::setup(void)
 		return (-1);
 	}
 	_addr.sin_family = AF_INET;
-	_addr.sin_port = htons(_config.getPort());
-	_addr.sin_addr.s_addr = inet_addr((_config.getHost().c_str()));
+	_addr.sin_port = htons(_virtualHosts[0].getPort());
+	_addr.sin_addr.s_addr = inet_addr((_virtualHosts[0].getHost().c_str()));
 	rc = bind(_fd, (struct sockaddr *)&_addr, sizeof(_addr));
 	if (rc < 0)
 	{
-		Console::error("Couldn't create server [" + _config.getHost() + ":" + Utils::to_string(_config.getPort()) + "]" + " : bind() call failed");
+		Console::error("Couldn't create server [" + _virtualHosts[0].getHost() + ":" + Utils::to_string(_virtualHosts[0].getPort()) + "]" + " : bind() call failed");
 		close(_fd);
 		return (-1);
 	}
@@ -94,27 +95,29 @@ void				Server::clean(void)
 */
 long				Server::send(long socket)
 {
-	Request			request;
-	Response		response;
+	Request					request;
+	Response				response;
 
 	std::string request_str = _requests[socket];
 	_requests.erase(socket);
 	request.load(request_str);
 
-	Route		route = findCorrespondingRoute(request.getURL());
+	ServerConfiguration &	virtualHost = findVirtualHost(request.getHeaders());
+	Console::info("Transmitting request to virtual host " + virtualHost.getName() + " with server_root " + virtualHost.getServerRoot());
+	Route					route = findCorrespondingRoute(request.getURL(), virtualHost);
 
 	this->handleRequestHeaders(request, response);
 	
 	if (route.requireAuth() && !request.hasAuthHeader())
-		this->handleUnauthorizedRequests(response);
+		this->handleUnauthorizedRequests(response, virtualHost);
 	else if (route.requireAuth() && request.hasAuthHeader() && !this->credentialsMatch(request.getHeaders()["Authorization"], route.getUserFile()))
-		this->handleUnauthorizedRequests(response);
-	else if (!this->requestIsValid(request))
-		this->handleRequestErrors(request, response);
-	else if (requestRequireRedirection(request))
-		this->generateRedirection(request, response);
+		this->handleUnauthorizedRequests(response, virtualHost);
+	else if (!this->requestIsValid(request, route))
+		this->handleRequestErrors(request, response, route, virtualHost);
+	else if (requestRequireRedirection(request, route))
+		this->generateRedirection(request, response, route);
 	else
-		response.setBody(this->generateResponseBody(request));
+		response.setBody(this->generateResponseBody(request, route, virtualHost));
 	
 	response.setHeader("Content-Length", Utils::to_string(response.getBody().length()));
 	std::string toSend = response.build();
@@ -140,9 +143,9 @@ long				Server::recv(long socket)
 	{
 		close(socket);
 		if (!ret)
-			Console::info("Connection on socket " + Utils::to_string(socket) + " was closed by client on server [" + _config.getHost() + ":" + Utils::to_string(_config.getPort()) + "]");
+			Console::info("Connection on socket " + Utils::to_string(socket) + " was closed by client on server [" + _virtualHosts[0].getHost() + ":" + Utils::to_string(_virtualHosts[0].getPort()) + "]");
 		else
-			Console::info("Read error on socket " + Utils::to_string(socket) + ". Closing this connexion on server [" + _config.getHost() + ":" + Utils::to_string(_config.getPort()) + "]");
+			Console::info("Read error on socket " + Utils::to_string(socket) + ". Closing this connexion on server [" + _virtualHosts[0].getHost() + ":" + Utils::to_string(_virtualHosts[0].getPort()) + "]");
 		return (-1);
 	}
 	_requests[socket] += std::string(buffer);
@@ -156,7 +159,7 @@ long				Server::accept(void)
 
 	socket = ::accept(_fd, NULL, NULL);
 	fcntl(socket, F_SETFL, O_NONBLOCK);
-	Console::info("Connexion received. Created non-blocking socket " + Utils::to_string(socket) + " for server [" + _config.getHost() + ":" + Utils::to_string(_config.getPort()) + "]");
+	Console::info("Connexion received. Created non-blocking socket " + Utils::to_string(socket) + " for server [" + _virtualHosts[0].getHost() + ":" + Utils::to_string(_virtualHosts[0].getPort()) + "]");
 	return (socket);
 }
 
@@ -168,23 +171,59 @@ long				Server::accept(void)
 long				Server::getFD(void) const
 { return (this->_fd); }
 
-ServerConfiguration	Server::getConfiguration() const
-{ return (_config); }
+std::vector<ServerConfiguration> &		Server::getVirtualHosts(void)
+{ return (_virtualHosts); }
 
-void	Server::load(ServerConfiguration conf)
-{ _config = conf; }
+ServerConfiguration &					Server::getVHConfig(std::string const & server_name)
+{
+	for (std::vector<ServerConfiguration>::iterator it = _virtualHosts.begin(); it != _virtualHosts.end(); it++)
+	{
+		if ((*it).getName() == server_name)
+			return (*it);
+	}
+	return (getDefaultVHConfig());
+}
+
+
+ServerConfiguration &					Server::getDefaultVHConfig(void)
+{ return (_virtualHosts[0]); }
+
+ServerConfiguration &					Server::findVirtualHost(DoubleString const & headers)
+{
+	for (DoubleString::const_iterator it = headers.begin(); it != headers.end(); it++)
+	{
+		if (it->first == "Host")
+		{
+			for (std::vector<ServerConfiguration>::iterator it2 = _virtualHosts.begin(); it2 != _virtualHosts.end(); it2++)
+			{
+				if (it->second == (*it2).getName() + ":" + Utils::to_string((*it2).getPort()))								// Ne fonctionnera pas si le port est le port 80 !
+					return (*it2);
+			}
+		}
+	}
+	return (getDefaultVHConfig());
+}
+
+
+void	Server::addVirtualHost(ServerConfiguration conf)
+{
+	if (!_virtualHosts.empty())
+		conf.setDefault(false);
+	if ((conf.getName()).empty())
+		conf.setName(conf.getHost());
+	_virtualHosts.push_back(conf);
+}
 
 
 /*
 ** ------ PRIVATE HELPERS : RESPONSE BODY HANDLERS ------
 */
-std::string			Server::generateResponseBody(Request const & request)
+std::string			Server::generateResponseBody(Request const & request, Route & route, ServerConfiguration & virtualHost)
 {
-	Route			route = findCorrespondingRoute(request.getURL());
 	std::string		targetPath = getLocalPath(request, route);
 
 	if (this->requestRequireCGI(request, route))
-		return (this->execCGI(request));
+		return (this->execCGI(request, route, virtualHost));
 	if (Utils::isDirectory(targetPath))
 	{
 		std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
@@ -197,7 +236,7 @@ std::string			Server::generateResponseBody(Request const & request)
 			return (autoindex.getIndex());
 		}
 		else
-			return (_config.getErrorPage(403));
+			return (virtualHost.getErrorPage(403));
 	}
 	return(Utils::getFileContent(targetPath));
 }
@@ -287,9 +326,9 @@ void	Server::handleLanguage(Request request, std::vector<std::string> vecLang, R
 ** ------ PRIVATE HELPERS : URL HANDLERS ------
 */
 
-Route		Server::findCorrespondingRoute(std::string URL)
+Route		Server::findCorrespondingRoute(std::string URL, ServerConfiguration & virtualHost)
 {
-	std::vector<Route>				routes = _config.getRoutes();
+	std::vector<Route>				routes = virtualHost.getRoutes();
 	std::vector<Route>::iterator	it = routes.begin();
 	std::vector<std::string>		vecURLComponent = Utils::split(URL, "/");
 	std::vector<std::string>		vecRouteComponent;
@@ -335,12 +374,10 @@ std::string	Server::getLocalPath(Request request, Route route)
 ** ------ PRIVATE HELPERS : CGI HANDLERS ------
 */
 
-std::string		Server::execCGI(Request request)
+std::string		Server::execCGI(Request request, Route & route, ServerConfiguration & virtualHost)
 {
-	Route		route;
 	std::string	targetPath;
 
-	route = this->findCorrespondingRoute(request.getURL());
 	if (this->requestRequireCGI(request, route))
 	{
 		targetPath = getLocalPath(request, route);
@@ -349,7 +386,7 @@ std::string		Server::execCGI(Request request)
 		else
 		{
 			CGI	cgi;
-			this->generateMetaVariables(cgi, request, route);
+			this->generateMetaVariables(cgi, request, route, virtualHost);
 			cgi.setBinary(route.getCGIBinary());
 			cgi.execute(targetPath);
 			return (cgi.getOutput());
@@ -370,17 +407,17 @@ bool		Server::requestRequireCGI(Request request, Route route)
 	return (false);
 }
 
-void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route)
+void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route, ServerConfiguration & virtualHost)
 {
 	DoubleString	headers = request.getHeaders();
 	std::string		targetPath = getLocalPath(request, route);
 
 	request.print();
 	cgi.addMetaVariable("GATEWAY_INTERFACE", "CGI/1.1");
-	cgi.addMetaVariable("SERVER_NAME", this->_config.getName());
+	cgi.addMetaVariable("SERVER_NAME", virtualHost.getName());
 	cgi.addMetaVariable("SERVER_SOFTWARE", "webserv/1.0");
 	cgi.addMetaVariable("SERVER_PROTOCOL", "HTTP/1.1");
-	cgi.addMetaVariable("SERVER_PORT", Utils::to_string(this->_config.getPort()));
+	cgi.addMetaVariable("SERVER_PORT", Utils::to_string(virtualHost.getPort()));
 	cgi.addMetaVariable("REQUEST_METHOD", request.getMethod());
 	// cgi.addMetaVariable("PATH_INFO", "test");												// A COMPLETER
 	cgi.addMetaVariable("PATH_TRANSLATED", targetPath);
@@ -405,9 +442,8 @@ void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route)
 /*
 ** ------ PRIVATE HELPERS : REDIRECTION HANDLERS ------
 */
-bool		Server::requestRequireRedirection(Request request)
+bool		Server::requestRequireRedirection(Request request, Route & route)
 {
-	Route			route = findCorrespondingRoute(request.getURL());
 	std::string		targetPath = getLocalPath(request, route);
 
 	if (Utils::isDirectory(targetPath) && request.getURL()[request.getURL().length() - 1] != '/')
@@ -418,9 +454,8 @@ bool		Server::requestRequireRedirection(Request request)
 	return (false);
 }
 
-void		Server::generateRedirection(Request request, Response &response)
+void		Server::generateRedirection(Request request, Response &response, Route & route)
 {
-	Route			route = findCorrespondingRoute(request.getURL());
 	std::string		targetPath = getLocalPath(request, route);
 
 	response.setStatus(301);
@@ -431,9 +466,8 @@ void		Server::generateRedirection(Request request, Response &response)
 /*
 ** ------ PRIVATE HELPERS : ERRORS HANDLERS ------
 */
-bool		Server::requestIsValid(Request request)
+bool		Server::requestIsValid(Request request, Route & route)
 {
-	Route			route = findCorrespondingRoute(request.getURL());
 	std::string		targetPath = getLocalPath(request, route);
 
 	if (!Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
@@ -441,7 +475,7 @@ bool		Server::requestIsValid(Request request)
 		_error_code = 404;
 		return (false);
 	}
-	else if (!this->isMethodAccepted(request))
+	else if (!this->isMethodAccepted(request, route))
 	{
 		_error_code = 405;
 		return (false);
@@ -449,19 +483,16 @@ bool		Server::requestIsValid(Request request)
 	return (true);
 }
 
-void		Server::handleRequestErrors(Request request, Response &response)
+void		Server::handleRequestErrors(Request request, Response &response, Route & route, ServerConfiguration & virtualHost)
 {
-	Route			route = findCorrespondingRoute(request.getURL());
 	std::string		targetPath = getLocalPath(request, route);
 
 	response.setStatus(_error_code);
-	response.setBody(_config.getErrorPage(_error_code));
+	response.setBody(virtualHost.getErrorPage(_error_code));
 }
 
-bool		Server::isMethodAccepted(Request request)
+bool		Server::isMethodAccepted(Request request, Route & route)
 {
-	Route			route = findCorrespondingRoute(request.getURL());
-
 	return (route.acceptMethod(request.getMethod()));
 }
 
@@ -469,11 +500,11 @@ bool		Server::isMethodAccepted(Request request)
 /*
 ** ------ PRIVATE HELPERS : AUTHORIZATION HANDLERS ------
 */
-void		Server::handleUnauthorizedRequests(Response & response)
+void		Server::handleUnauthorizedRequests(Response & response, ServerConfiguration & virtualHost)
 {
 	response.setStatus(401);
 	response.setHeader("www-authenticate","Basic realm=\"HTTP auth required\"");
-	response.setBody(_config.getErrorPage(401));
+	response.setBody(virtualHost.getErrorPage(401));
 }
 
 bool		Server::credentialsMatch(std::string const & requestAuthHeader, std::string const & userFile)

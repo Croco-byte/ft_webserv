@@ -6,13 +6,13 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 10:31:05 by user42            #+#    #+#             */
-/*   Updated: 2021/05/27 17:48:32 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/29 13:39:32 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "core/ConnexionManager.hpp"
 
-ConnexionManager::ConnexionManager()
+ConnexionManager::ConnexionManager(): _vecServers()
 {}
 
 
@@ -24,10 +24,15 @@ ConnexionManager::~ConnexionManager()
 /*
 ** ------ UTILITY FUNCTIONS ------
 */
-
-void			ConnexionManager::addServer(Server toAdd)
+void							ConnexionManager::addServer(Server toAdd)
 { this->_vecServers.push_back(toAdd); }
 
+
+/*
+** ------ GETTERS | SETTERS ------
+*/
+std::vector<Server> &		ConnexionManager::getServers(void)
+{ return (_vecServers); }
 
 
 /*
@@ -50,7 +55,15 @@ int				ConnexionManager::setup(void)
 			_listen_fds.insert(std::make_pair(fd, &(*lstn)));
 			if (fd > _max_fd)
 				_max_fd = fd;
-			Console::info("Setting up server [" + (*lstn).getConfiguration().getHost() + ":" + Utils::to_string((*lstn).getConfiguration().getPort()) + "]");
+			Console::info("Finished setting up server [" + (*lstn).getDefaultVHConfig().getHost() + ":" + Utils::to_string((*lstn).getDefaultVHConfig().getPort()) + "]");
+			std::cout << "			This server has the following virtual hosts :" << std::endl;
+			for (std::vector<ServerConfiguration>::iterator it = (*lstn).getVirtualHosts().begin(); it != (*lstn).getVirtualHosts().end(); it++)
+			{
+				if ((*it).isDefault())
+					std::cout << "				> " << (*it).getName() << GREEN << "	(default)" << NC << std::endl;
+				else
+					std::cout << "				> " << (*it).getName() << std::endl;
+			}
 		}
 	}
 	if (_max_fd == 0)
