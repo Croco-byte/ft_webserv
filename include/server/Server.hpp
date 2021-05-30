@@ -44,10 +44,13 @@ class Server
 		std::map<long, std::string>						_requests;
 		int												_error_code;
 
-		/* PRIVATE HELPERS : RESPONSE BODY HANDLERS */
-		std::string						generateResponseBody(Request const & request, Route & route, ServerConfiguration & virtualHost);
+		/* PRIVATE HELPERS : RESPONSE HEADERS HANDLERS */
+		void							setResponseHeaders(Response & response);
 
-		/* PRIVATE HELPERS : HEADER HANDLERS */
+		/* PRIVATE HELPERS : RESPONSE BODY HANDLERS */
+		void							setResponseBody(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost);
+
+		/* PRIVATE HELPERS : REQUEST HEADER HANDLERS */
 		void							handleRequestHeaders(Request request, Response &reponse);
 		void							handleCharset(std::vector<std::string> vecCharset, Response &response);
 		void							handleLanguage(Request request, std::vector<std::string> vecLang, Response &response);

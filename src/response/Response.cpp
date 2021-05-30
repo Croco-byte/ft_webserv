@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/27 17:58:32 by user42            #+#    #+#             */
-/*   Updated: 2021/05/28 12:44:28 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/30 15:36:52 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,10 @@ std::string	Response::build()
 	 * EN-TETE : Valeur <crlf>...
 	 */
 	for (DoubleString::iterator it = _headers.begin(); it != _headers.end(); it++)
-		headers.append(it->first + ": " + it->second + ENDL);
+	{
+		if (!it->second.empty())
+			headers.append(it->first + ": " + it->second + ENDL);
+	}
 
 	/**
 	 * Build response

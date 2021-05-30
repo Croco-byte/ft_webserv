@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/29 15:11:37 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/30 15:37:26 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,9 +117,9 @@ long				Server::send(long socket)
 	else if (requestRequireRedirection(request, route))
 		this->generateRedirection(request, response, route);
 	else
-		response.setBody(this->generateResponseBody(request, route, virtualHost));
+		this->setResponseBody(response, request, route, virtualHost);
 	
-	response.setHeader("Content-Length", Utils::to_string(response.getBody().length()));
+	this->setResponseHeaders(response);
 	std::string toSend = response.build();
 
 	int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
@@ -196,7 +196,7 @@ ServerConfiguration &					Server::findVirtualHost(DoubleString const & headers)
 		{
 			for (std::vector<ServerConfiguration>::iterator it2 = _virtualHosts.begin(); it2 != _virtualHosts.end(); it2++)
 			{
-				if (it->second == (*it2).getName() + ":" + Utils::to_string((*it2).getPort()))								// Ne fonctionnera pas si le port est le port 80 !
+				if (it->second == (*it2).getName() + ":" + Utils::to_string((*it2).getPort()) || it->second == (*it2).getName())
 					return (*it2);
 			}
 		}
@@ -216,29 +216,50 @@ void	Server::addVirtualHost(ServerConfiguration conf)
 
 
 /*
+** ------ PRIVATE HELPERS : RESPONSE HEADERS HANDLERS ------
+*/
+void				Server::setResponseHeaders(Response & response)
+{
+	response.setHeader("Content-Length", Utils::to_string(response.getBody().length()));
+}
+
+/*
 ** ------ PRIVATE HELPERS : RESPONSE BODY HANDLERS ------
 */
-std::string			Server::generateResponseBody(Request const & request, Route & route, ServerConfiguration & virtualHost)
+void				Server::setResponseBody(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost)
 {
+	std::string		body;
 	std::string		targetPath = getLocalPath(request, route);
+	std::string		lastModified = Utils::getLastModified(targetPath);
 
-	if (this->requestRequireCGI(request, route))
-		return (this->execCGI(request, route, virtualHost));
 	if (Utils::isDirectory(targetPath))
 	{
 		std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
 		if (Utils::pathExists(indexPath) && Utils::isRegularFile(indexPath))
-			return (Utils::getFileContent(indexPath));
+		{
+			response.setHeader("Last-Modified", lastModified);
+			body = Utils::getFileContent(indexPath);
+		}
 		else if (route.autoIndex())
 		{
 			AutoIndex autoindex(request.getURL(), targetPath);
 			autoindex.createIndex();
-			return (autoindex.getIndex());
+			body = autoindex.getIndex();
 		}
 		else
-			return (virtualHost.getErrorPage(403));
+			body = virtualHost.getErrorPage(403);
 	}
-	return(Utils::getFileContent(targetPath));
+	else if (this->requestRequireCGI(request, route))
+	{
+		response.setHeader("Last-Modified", lastModified);
+		body = this->execCGI(request, route, virtualHost);
+	}
+	else
+	{
+		response.setHeader("Last-Modified", lastModified);
+		body = Utils::getFileContent(targetPath);
+	}
+	response.setBody(body);
 }
 
 

@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/26 11:27:38 by user42            #+#    #+#             */
-/*   Updated: 2021/05/27 17:58:21 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/30 14:42:27 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 ** ------ CONSTRUCTORS | DESTRUCTOR ------
 */
 AutoIndex::AutoIndex(std::string const & url, std::string const & dirPath): _url(url), _dirPath(dirPath)
-{ _index = "<h1>Index of " + _url + "</h1><br/><hr><br/>"; }
+{ _index = "<h1>Index of " + _url + "</h1><br/><hr><br/><table><td><h3>Path</h3></td><td style=\"padding-left: 250px;\"><h3>Last Modified</h3>"; }
 
 AutoIndex::~AutoIndex()
 {}
@@ -39,7 +39,7 @@ void					AutoIndex::createIndex(void)
 		this->addIndexLine(i);
 		i++;
 	}
-	_index += "<br/><hr>";
+	_index += "</table><br/><hr>";
 }
 
 
@@ -102,7 +102,7 @@ void				AutoIndex::createEntries(void)
 
 void			AutoIndex::addIndexLine(int line)
 {
-	_index += "<a href=\"" + _entries[line] + "\">		" + _filenames[line] + "</a><br/>";
+	_index += "<tr><td><a href=\"" + _entries[line] + "\">		" + _filenames[line] + "</a></td><td style=\"padding-left: 250px;\">" + Utils::getLastModified(_dirPath + _entries[line]) + "</td></tr>";
 }
 
 

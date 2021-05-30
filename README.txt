@@ -110,17 +110,35 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 
 [DONE]	Finaliser le CGI (petits leaks qui restent)
 
-[TODO]	Gestion des différents headers : notamment le Transfer-Encoding pour le parsing de la requête.
-
 [DONE]	Gestion des pages et des codes d'erreur.
 		Gestion des pages d'erreur par défaut hardcodées.
 
 [TODO]	Valider le fichier de configuration
 
 [TODO]	CGI : prefixe HTTP_ pour les headers
-		Firefox qui n'exécute pas les fichiers PHP mais propose de les télécharger.
+		Firefox qui n'exécute pas les fichiers PHP mais propose de les télécharger (EDIT : NGINX a le même comportement sur Firefox, le pb ne semble pas venir de nous)
 
 [TODO]	Ajouter un path par défaut pour la configuration.
 
 [DONE]	Gestion des server_names (virtualHosts) et serveur par défaut
-[TODO]	Gérer le cas particulier du port 80 pour les virtualHosts.
+		Gérer le cas particulier du port 80 pour les virtualHosts.
+
+[TODO]	Gérer les headers. Liste des headers :
+			> Accept-Charset					OK
+			> Accept-Language					OK
+			> Allow
+			> Authorization						OK
+			> Content-Language
+			> Content-Length					OK
+			> Content-Location
+			> Content-Type
+			> Date								OK
+			> Host								OK
+			> Last-Modified						OK
+			> Location
+			> Referrer
+			> Retry-After
+			> Server
+			> Transfer-Encoding
+			> User-Agent						OK ? (est-ce qu'on a qqchose à faire avec ce header ? Envoyer au CGI ?)
+			> WWW-Authenticate					OK

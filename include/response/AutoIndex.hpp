@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/26 11:07:45 by user42            #+#    #+#             */
-/*   Updated: 2021/05/27 17:59:49 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/30 12:12:47 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define AUTOINDEX_HPP
 
 #include "server/Server.hpp"
+#include "utils/include.hpp"
 #include <iostream>
 #include <dirent.h>
 #include <vector>

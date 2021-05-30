@@ -39,6 +39,19 @@ namespace Utils
 		return (false);
 	}
 
+	std::string		getLastModified(std::string const & path)
+	{
+		struct stat		tmp_stat;
+		char			buffer[100];
+
+		if (stat(path.c_str(), &tmp_stat) == 0)
+		{
+			strftime(buffer, 100, "%a, %d %b %Y %H:%M:%S GMT", gmtime(&tmp_stat.st_mtime));
+			return (buffer);
+		}
+		return ("");
+	}
+
 	std::string		get_file_extension(std::string filename)
 	{
 		size_t	pos = filename.rfind('.');

@@ -10,6 +10,7 @@
 # include <arpa/inet.h>
 # include <sys/types.h>
 # include <sys/wait.h>
+# include <ctime>
 # include <limits.h>
 # include <sys/un.h>
 # include <netinet/in.h>
@@ -82,6 +83,7 @@ namespace Utils
 	bool						isRegularFile(std::string const & filename);
 	bool						isDirectory(std::string const & name);
 	std::string					getFileContent(std::string const & filename);
+	std::string					getLastModified(std::string const & path);
 	std::string					get_file_extension(std::string filename);
 
 	template <typename T1, typename T2>
