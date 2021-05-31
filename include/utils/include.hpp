@@ -82,6 +82,7 @@ namespace Utils
 	bool						pathExists(std::string const & filename);
 	bool						isRegularFile(std::string const & filename);
 	bool						isDirectory(std::string const & name);
+	bool						canOpenFile(std::string const filename);
 	std::string					getFileContent(std::string const & filename);
 	std::string					getLastModified(std::string const & path);
 	std::string					get_file_extension(std::string filename);

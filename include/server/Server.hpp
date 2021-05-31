@@ -52,8 +52,9 @@ class Server
 
 		/* PRIVATE HELPERS : REQUEST HEADER HANDLERS */
 		void							handleRequestHeaders(Request request, Response &reponse);
-		void							handleCharset(std::vector<std::string> vecCharset, Response &response);
+		bool							isCharsetValid(Request request);
 		void							handleLanguage(Request request, std::vector<std::string> vecLang, Response &response);
+		bool							check403(Request request, Route route);
 
 		/* PRIVATE HELPERS : URL HANDLERS */
 		Route							findCorrespondingRoute(std::string url, ServerConfiguration & virtualHost);

@@ -18,7 +18,7 @@ namespace Utils
 			std::string content((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
 			return (content);
 		}
-		return ("");
+		return (NULL);
 	}
 
 	bool			isRegularFile(std::string const & filename)
@@ -37,6 +37,14 @@ namespace Utils
 		if (S_ISDIR(tmp_stat.st_mode))
 			return (true);
 		return (false);
+	}
+
+	bool			canOpenFile(std::string const filename)
+	{
+		std::ifstream file(filename.c_str());
+		bool ret = (file.is_open() && file.good());
+		file.close();
+		return (ret);
 	}
 
 	std::string		getLastModified(std::string const & path)

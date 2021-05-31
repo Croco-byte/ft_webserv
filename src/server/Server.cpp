@@ -235,7 +235,7 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 	if (Utils::isDirectory(targetPath))
 	{
 		std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
-		if (Utils::pathExists(indexPath) && Utils::isRegularFile(indexPath))
+		if (Utils::pathExists(indexPath) && Utils::isRegularFile(indexPath) && Utils::canOpenFile(indexPath))
 		{
 			response.setHeader("Last-Modified", lastModified);
 			body = Utils::getFileContent(indexPath);
@@ -256,8 +256,15 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 	}
 	else
 	{
-		response.setHeader("Last-Modified", lastModified);
-		body = Utils::getFileContent(targetPath);
+		if (Utils::pathExists(targetPath) && Utils::isRegularFile(targetPath) && Utils::canOpenFile(targetPath))
+		{
+			response.setHeader("Last-Modified", lastModified);
+			body = Utils::getFileContent(targetPath);
+		}
+		else if (Utils::pathExists(targetPath) && Utils::isRegularFile(targetPath) && !Utils::canOpenFile(targetPath))
+		{
+			// ERROR 403
+		}
 	}
 	response.setBody(body);
 }
@@ -272,29 +279,35 @@ void				Server::handleRequestHeaders(Request request, Response &response)
 
 	for (DoubleString::iterator it = headers.begin(); it != headers.end(); it++)
 	{
-		if (it->first == "Accept-Charset")
-			this->handleCharset(Utils::split(it->second, ","), response);
-		else if (it->first == "Accept-Language")
+		// if (it->first == "Accept-Charset")
+		// 	this->handleCharset(Utils::split(it->second, ","), response);
+		if (it->first == "Accept-Language")
 			this->handleLanguage(request, Utils::split(it->second, ","), response);
 	}
 }
 
-void	Server::handleCharset(std::vector<std::string> vecCharset, Response &response)
+bool				Server::isCharsetValid(Request request)
 {
+	std::vector<std::string>	vecCharset;
+	DoubleString				headers = request.getHeaders();
+	DoubleString::iterator		find_it;
+
+	find_it = headers.find("Accept-Charset");
+	if (find_it == headers.end())
+		return (true);
+	vecCharset = Utils::split(find_it->second, ",");
 	for (std::vector<std::string>::iterator it = vecCharset.begin(); it != vecCharset.end(); it++)
 		*it = Utils::to_lower(Utils::trim(*it));
 
 	if (vecCharset.size() == 1 && (vecCharset[0] == "*" || vecCharset[0] == "utf-8"))
-		return ;
+		return (true);
 
 	for (std::vector<std::string>::iterator it = vecCharset.begin(); it != vecCharset.end(); it++)
 	{
 		if (*it == "*" || *it == "utf-8")
-			return ;
+			return (true);
 	}
-	
-	Console::error("Charset not found !");
-	response.setStatus(406);
+	return (false);
 }
 
 void	Server::handleLanguage(Request request, std::vector<std::string> vecLang, Response &response)
@@ -491,7 +504,12 @@ bool		Server::requestIsValid(Request request, Route & route)
 {
 	std::string		targetPath = getLocalPath(request, route);
 
-	if (!Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
+	if (this->check403(request, route))
+	{
+		_error_code = 403;
+		return (false);
+	}
+	else if (!Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
 	{
 		_error_code = 404;
 		return (false);
@@ -501,6 +519,11 @@ bool		Server::requestIsValid(Request request, Route & route)
 		_error_code = 405;
 		return (false);
 	}
+	else if (!this->isCharsetValid(request))
+	{
+		_error_code = 406;
+		return (false);
+	}
 	return (true);
 }
 
@@ -508,6 +531,8 @@ void		Server::handleRequestErrors(Request request, Response &response, Route & r
 {
 	std::string		targetPath = getLocalPath(request, route);
 
+	if (_error_code == 405)
+		response.setHeader("Allow", Utils::join(route.getAcceptedMethods()));
 	response.setStatus(_error_code);
 	response.setBody(virtualHost.getErrorPage(_error_code));
 }
@@ -546,4 +571,22 @@ bool		Server::credentialsMatch(std::string const & requestAuthHeader, std::strin
 			return (true);
 	}
 	return (false);
+}
+
+bool		Server::check403(Request request, Route route)
+{
+	std::string		targetPath = getLocalPath(request, route);
+
+	if (Utils::isDirectory(targetPath))
+	{
+		std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
+		if (Utils::pathExists(indexPath) && Utils::isRegularFile(indexPath) && Utils::canOpenFile(indexPath))
+			return (false);
+		else if (route.autoIndex())
+			return (false);
+		else
+			return (true);
+	}
+	else
+		return (false);
 }
