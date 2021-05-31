@@ -587,6 +587,8 @@ bool		Server::check403(Request request, Route route)
 		else
 			return (true);
 	}
+	else if (Utils::pathExists(targetPath) && Utils::isRegularFile(targetPath) && !Utils::canOpenFile(targetPath))
+		return (true);
 	else
 		return (false);
 }
