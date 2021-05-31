@@ -126,7 +126,7 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 [TODO]	Gérer les headers. Liste des headers :
 			> Accept-Charset					OK
 			> Accept-Language					OK
-			> Allow
+			> Allow								OK (mettre en majuscule)
 			> Authorization						OK
 			> Content-Language
 			> Content-Length					OK
