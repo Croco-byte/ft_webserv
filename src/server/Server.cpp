@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/30 15:37:26 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/31 11:12:37 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -246,8 +246,6 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 			autoindex.createIndex();
 			body = autoindex.getIndex();
 		}
-		else
-			body = virtualHost.getErrorPage(403);
 	}
 	else if (this->requestRequireCGI(request, route))
 	{
@@ -260,10 +258,6 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 		{
 			response.setHeader("Last-Modified", lastModified);
 			body = Utils::getFileContent(targetPath);
-		}
-		else if (Utils::pathExists(targetPath) && Utils::isRegularFile(targetPath) && !Utils::canOpenFile(targetPath))
-		{
-			// ERROR 403
 		}
 	}
 	response.setBody(body);
