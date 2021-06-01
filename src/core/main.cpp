@@ -64,13 +64,14 @@ void	quit(int unused)
 
 int		main(int ac, char **av)
 {
+	std::string	config;
+
 	if (ac == 1)
-	{
-		Console::error("Require a configuration file");
-		return (1);
-	}
+		config = "./config/default.conf";
+	else
+		config = av[1];
 	signal(SIGINT, quit);
-	webserv.parseConfiguration(av[1]);
+	webserv.parseConfiguration(config);
 	webserv.run();
 	return (0);
 }

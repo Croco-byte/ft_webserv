@@ -414,7 +414,10 @@ std::string		Server::execCGI(Request request, Route & route, ServerConfiguration
 		else
 		{
 			CGI	cgi;
+			if (request.getMethod() == "POST" || request.getMethod() == "post")
+				cgi.setInput(request.getBody());
 			this->generateMetaVariables(cgi, request, route, virtualHost);
+			cgi.convertHeadersToMetaVariables(request);
 			cgi.setBinary(route.getCGIBinary());
 			cgi.execute(targetPath);
 			return (cgi.getOutput());
@@ -447,20 +450,24 @@ void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route, Se
 	cgi.addMetaVariable("SERVER_PROTOCOL", "HTTP/1.1");
 	cgi.addMetaVariable("SERVER_PORT", Utils::to_string(virtualHost.getPort()));
 	cgi.addMetaVariable("REQUEST_METHOD", request.getMethod());
-	// cgi.addMetaVariable("PATH_INFO", "test");												// A COMPLETER
+	cgi.addMetaVariable("PATH_INFO", "");												// A COMPLETER
 	cgi.addMetaVariable("PATH_TRANSLATED", targetPath);
 	cgi.addMetaVariable("SCRIPT_NAME", route.getCGIBinary());
 	cgi.addMetaVariable("DOCUMENT_ROOT", route.getLocalURL());									// A Vérifier
 	cgi.addMetaVariable("QUERY_STRING", request.getQueryString());
-	cgi.addMetaVariable("REMOTE_ADDR", request.getIP());
+	cgi.addMetaVariable("REMOTE_ADDR", "127.0.0.1");											// A COMPLETER
 	cgi.addMetaVariable("AUTH_TYPE", (route.requireAuth() ? "BASIC" : ""));
 	cgi.addMetaVariable("REMOTE_USER", "user");
+	cgi.addMetaVariable("CONTENT_TYPE", "text/html");
 	if (headers.find("Content-Type") != headers.end())
 	{
 		DoubleString::iterator it = headers.find("Content-Type");
 		cgi.addMetaVariable("CONTENT_TYPE", it->second);
 	}
 	cgi.addMetaVariable("CONTENT_LENGTH", Utils::to_string(request.getBody().length()));
+	if (request.getMethod() == "get" || request.getMethod() == "GET")
+		cgi.addMetaVariable("CONTENT_LENGTH", "0");
+	cgi.addMetaVariable("REDIRECT_STATUS", "200");
 	cgi.addMetaVariable("HTTP_ACCEPT", request.getHeaders()["HTTP_ACCEPT"]);
 	cgi.addMetaVariable("HTTP_USER_AGENT", request.getHeaders()["User-Agent"]);
 	cgi.addMetaVariable("HTTP_REFERER", request.getHeaders()["Referer"]);
@@ -523,10 +530,13 @@ bool		Server::requestIsValid(Request request, Route & route)
 
 void		Server::handleRequestErrors(Request request, Response &response, Route & route, ServerConfiguration & virtualHost)
 {
-	std::string		targetPath = getLocalPath(request, route);
+	std::string					targetPath = getLocalPath(request, route);
+	std::vector<std::string>	vecMethods = route.getAcceptedMethods();
 
+	for (std::vector<std::string>::iterator it = vecMethods.begin(); it != vecMethods.end(); it++)
+		*it = Utils::to_upper(*it);
 	if (_error_code == 405)
-		response.setHeader("Allow", Utils::join(route.getAcceptedMethods()));
+		response.setHeader("Allow", Utils::join(vecMethods));
 	response.setStatus(_error_code);
 	response.setBody(virtualHost.getErrorPage(_error_code));
 }
