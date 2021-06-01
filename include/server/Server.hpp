@@ -45,10 +45,12 @@ class Server
 		int												_error_code;
 
 		/* PRIVATE HELPERS : RESPONSE HEADERS HANDLERS */
-		void							setResponseHeaders(Response & response);
+		void							setResponseHeaders(Response & response, Route & route);
 
 		/* PRIVATE HELPERS : RESPONSE BODY HANDLERS */
 		void							setResponseBody(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost);
+		void							handlePUTRequest(Request const & request, Response & response, std::string const & targetPath);
+		void							handleDELETERequest(Response & response, std::string const & targetPath);
 
 		/* PRIVATE HELPERS : REQUEST HEADER HANDLERS */
 		void							handleRequestHeaders(Request request, Response &reponse);

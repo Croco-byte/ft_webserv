@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/05/31 11:12:37 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/31 18:01:13 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,7 +119,7 @@ long				Server::send(long socket)
 	else
 		this->setResponseBody(response, request, route, virtualHost);
 	
-	this->setResponseHeaders(response);
+	this->setResponseHeaders(response, route);
 	std::string toSend = response.build();
 
 	int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
@@ -218,9 +218,11 @@ void	Server::addVirtualHost(ServerConfiguration conf)
 /*
 ** ------ PRIVATE HELPERS : RESPONSE HEADERS HANDLERS ------
 */
-void				Server::setResponseHeaders(Response & response)
+void				Server::setResponseHeaders(Response & response, Route & route)
 {
 	response.setHeader("Content-Length", Utils::to_string(response.getBody().length()));
+	if (!route.getRouteLang().empty())
+		response.setHeader("Content-Language", route.getFormattedLang());
 }
 
 /*
@@ -232,7 +234,11 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 	std::string		targetPath = getLocalPath(request, route);
 	std::string		lastModified = Utils::getLastModified(targetPath);
 
-	if (Utils::isDirectory(targetPath))
+	if (request.getMethod() == "PUT")
+		this->handlePUTRequest(request, response, targetPath);
+	else if (request.getMethod() == "DELETE")
+		this->handleDELETERequest(response, targetPath);
+	else if (Utils::isDirectory(targetPath))
 	{
 		std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
 		if (Utils::pathExists(indexPath) && Utils::isRegularFile(indexPath) && Utils::canOpenFile(indexPath))
@@ -263,6 +269,49 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 	response.setBody(body);
 }
 
+void				Server::handlePUTRequest(Request const & request, Response & response, std::string const & targetPath)		// Still have to set body for 403 and 409
+{
+	std::ofstream file;
+	std::cout << "[DEBUG] Trying to create file " << targetPath << " with content " << request.getBody() << std::endl;
+	if (Utils::isRegularFile(targetPath))
+	{
+		file.open(targetPath.c_str());
+		file << request.getBody();
+		file.close();
+		response.setStatus(204);
+	}
+	else if (Utils::isDirectory(targetPath))
+		response.setStatus(409);
+	else
+	{
+		file.open(targetPath.c_str(), std::ofstream::out | std::ofstream::trunc);
+		if (!(file.is_open() && file.good()))
+			response.setStatus(403);
+		else
+		{
+			file << request.getBody();
+			response.setStatus(201);
+		}
+	}
+}
+
+void				Server::handleDELETERequest(Response & response, std::string const & targetPath)		// Still have to set body for 403 and 404
+{
+	std::cout << "[DEBUG] Trying to delete file " << targetPath << std::endl;
+	if (Utils::isRegularFile(targetPath))
+	{
+		if (remove(targetPath.c_str()) == 0)
+			response.setStatus(204);
+		else
+			response.setStatus(403);
+	}
+	else if (Utils::isDirectory(targetPath))
+		response.setStatus(403);
+	else
+		response.setStatus(404);
+}
+
+
 
 /*
 ** ------ PRIVATE HELPERS : HEADER HANDLERS ------
@@ -270,13 +319,13 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 void				Server::handleRequestHeaders(Request request, Response &response)
 {
 	DoubleString				headers = request.getHeaders();
-
+	(void)response;
 	for (DoubleString::iterator it = headers.begin(); it != headers.end(); it++)
 	{
 		// if (it->first == "Accept-Charset")
 		// 	this->handleCharset(Utils::split(it->second, ","), response);
-		if (it->first == "Accept-Language")
-			this->handleLanguage(request, Utils::split(it->second, ","), response);
+		//if (it->first == "Accept-Language")
+		//	this->handleLanguage(request, Utils::split(it->second, ","), response);
 	}
 }
 
@@ -304,6 +353,7 @@ bool				Server::isCharsetValid(Request request)
 	return (false);
 }
 
+/*
 void	Server::handleLanguage(Request request, std::vector<std::string> vecLang, Response &response)
 {
 	for (std::vector<std::string>::iterator it = vecLang.begin(); it != vecLang.end(); it++)
@@ -347,7 +397,7 @@ void	Server::handleLanguage(Request request, std::vector<std::string> vecLang, R
 			}
 		}
 	}
-}
+} */
 
 
 /*
@@ -503,7 +553,7 @@ bool		Server::requestIsValid(Request request, Route & route)
 		_error_code = 403;
 		return (false);
 	}
-	else if (!Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
+	else if ((request.getMethod() == "GET" || request.getMethod() == "POST") && !Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
 	{
 		_error_code = 404;
 		return (false);

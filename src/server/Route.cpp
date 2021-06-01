@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/27 17:58:43 by user42            #+#    #+#             */
-/*   Updated: 2021/05/28 13:11:49 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/31 15:14:00 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ Route::Route(const Route &x)
 	_upload_dir = x._upload_dir;
 	_require_auth = x._require_auth;
 	_auth_basic_user_file = x._auth_basic_user_file;
+	_routeLang = x._routeLang;
 }
 
 Route::~Route()
@@ -95,6 +96,8 @@ void								Route::setUploadDir(std::string const & dir)
 void								Route::setUserFile(std::string const & file)
 { _auth_basic_user_file = file; }
 
+void								Route::setRouteLang(std::vector<std::string> const & lang)
+{ _routeLang = lang; }
 
 std::vector<std::string> const &	Route::getAcceptedMethods(void) const
 { return (_accepted_methods); }
@@ -126,6 +129,22 @@ std::string const &					Route::getUploadDir(void) const
 std::string const &					Route::getUserFile(void) const
 { return (_auth_basic_user_file); }
 
+std::vector<std::string> const &	Route::getRouteLang(void) const
+{ return (_routeLang); }
+
+std::string							Route::getFormattedLang(void) const
+{
+	std::string result;
+	for (std::vector<std::string>::const_iterator it = _routeLang.begin(); it != _routeLang.end(); it++)
+	{
+		if (it != _routeLang.end() - 1)
+			result += (*it + ",");
+		else
+			result += (*it);
+	}
+	return (result);
+}
+
 std::ostream	&operator<<(std::ostream &stream, Route const & route)
 {
 	stream	<< "\033[0;33m" << std::endl
@@ -140,6 +159,7 @@ std::ostream	&operator<<(std::ostream &stream, Route const & route)
 			<< "    - route                 : " << route.getRoute() << std::endl
 			<< "    - local URL             : " << route.getLocalURL() << std::endl
 			<< "    - CGI Binary            : " << route.getCGIBinary() << std::endl
+			<< "    - language              : " << route.getFormattedLang() << std::endl
 			<< "    - upload dir            : " << route.getUploadDir() << std::endl;
 	return (stream);
 }

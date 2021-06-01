@@ -35,6 +35,7 @@ class	Route
 		void										addCGIExtension(std::string const & ext);
 		void										setUploadDir(std::string const & dir);
 		void										setUserFile(std::string const & file);
+		void										setRouteLang(std::vector<std::string> const & lang);
 
 		std::vector<std::string> const &			getAcceptedMethods(void) const;
 		std::vector<std::string> const &			getCGIExtensions(void) const;
@@ -46,6 +47,8 @@ class	Route
 		std::string const &							getCGIBinary(void) const;
 		std::string const &							getUploadDir(void) const;
 		std::string const &							getUserFile(void) const;
+		std::vector<std::string> const &			getRouteLang(void) const;
+		std::string									getFormattedLang(void) const;
 
 		bool										acceptMethod(std::string method);
 
@@ -60,6 +63,7 @@ class	Route
 		std::string					_cgi_bin;
 		std::string					_upload_dir;
 		std::string					_auth_basic_user_file;
+		std::vector<std::string>	_routeLang;
 };
 
 std::ostream	&operator<<(std::ostream &stream, Route const & route);

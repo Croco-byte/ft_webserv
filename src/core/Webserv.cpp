@@ -58,7 +58,8 @@ bool						Webserv::isValidRouteDirective(std::string const & directive) const
 {
 	if (directive == "root" || directive == "index" || directive == "autoindex"
 		|| directive == "upload_dir" || directive == "cgi_extension" || directive == "cgi_bin"
-		|| directive == "methods" || directive == "auth_basic" || directive == "auth_basic_user_file")
+		|| directive == "methods" || directive == "auth_basic" || directive == "auth_basic_user_file"
+		|| directive == "language")
 		return (true);
 	return (false);
 }
@@ -276,6 +277,8 @@ bool						Webserv::handleRouteLine(std::string const & line, Route & route)
 			route.enableRequireAuth();
 		else if (instruction == "auth_basic_user_file")
 			route.setUserFile(params[0]);
+		else if (instruction == "language")
+			route.setRouteLang(params);
 		return (true);
 	}
 	return (false);

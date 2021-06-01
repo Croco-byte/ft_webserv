@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/27 17:58:32 by user42            #+#    #+#             */
-/*   Updated: 2021/05/30 15:36:52 by user42           ###   ########.fr       */
+/*   Updated: 2021/05/31 17:49:16 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ void		Response::initResponseCodeExplications()
 	_code_explications[404] = "Not Found";
 	_code_explications[405] = "Method Not Allowed";
 	_code_explications[406] = "Non acceptable";
+	_code_explications[409] = "Conflict";
 	_code_explications[413] = "Request Entity Too Large";
 	_code_explications[500] = "Internal Server Error";
 	_code_explications[501] = "Not Implemented";

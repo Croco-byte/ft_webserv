@@ -5,6 +5,33 @@ Request::Request()
 	mustClose = false;
 }
 
+void						Request::parseLang(void)
+{
+	std::vector<std::string>	token;
+	std::string					header;
+	size_t						i;
+
+	if ((header = this->headers["Accept-Language"]) != "")
+	{
+		token = Utils::split(header, ",");
+		for (std::vector<std::string>::iterator it = token.begin(); it != token.end(); it++)
+		{
+			float			weight(1.0);
+			std::string		lang;
+
+			Utils::trim(*it);
+			if ((i = ((*it).find(';'))) == std::string::npos)
+				_lang[weight] = *it;
+			else
+			{
+				lang = (*it).substr(0, i);
+				weight = atof((*it).substr(i + 3).c_str());
+				_lang[weight] = lang;
+			}
+		}
+	}
+}
+
 void						Request::load(std::string request)
 {
 	std::vector<std::string>	line;
@@ -64,6 +91,33 @@ void						Request::load(std::string request)
 			data[name] = value;
 		}
 		data_str = request_lines[row];
+	}
+	this->parseLang();
+	std::cout << "Accept-Language = ";
+	for (std::map<float, std::string>::iterator it = _lang.begin(); it != _lang.end(); it++)
+		std::cout << "[" << it->first << "|" << it->second << "] ";
+	std::cout << std::endl;
+
+	this->getRequestBody(request);
+}
+
+void						Request::getRequestBody(std::string const & request)
+{
+	size_t i = request.find("\r\n\r\n");
+	if (i != std::string::npos)
+	{
+		i += 4;
+		std::map<std::string, std::string>::iterator it = headers.find("Content-Length");
+		if (it != headers.end())
+		{
+			int j(0);
+			while (j < atoi((it->second.c_str())))
+			{
+				_body += request[i];
+				i++;
+				j++;
+			}
+		}
 	}
 }
 

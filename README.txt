@@ -128,7 +128,7 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 			> Accept-Language					OK
 			> Allow								OK (mettre en majuscule)
 			> Authorization						OK
-			> Content-Language
+			> Content-Language					OK
 			> Content-Length					OK
 			> Content-Location
 			> Content-Type
@@ -140,5 +140,5 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 			> Retry-After
 			> Server
 			> Transfer-Encoding
-			> User-Agent						OK ? (est-ce qu'on a qqchose à faire avec ce header ? Envoyer au CGI ?)
+			> User-Agent						OK
 			> WWW-Authenticate					OK
