@@ -20,15 +20,21 @@ void	CGI::setBinary(std::string path)
 	_binary = path;
 }
 
+void	CGI::setInput(std::string content)
+{
+	_input = content;
+}
+
 void	CGI::execute(std::string target)
 {
 	pid_t		pid;
-	int			fd[2];
+	int			output_fd[2];
+	int			input_fd[2];
 	char		tmp[1024];
 	int			ret;
 	std::string	output;
 
-	if (pipe(fd))
+	if (pipe(output_fd) || pipe(input_fd))
 	{
 		Console::error("Pipe failed for CGI");
 		return ;
@@ -45,12 +51,14 @@ void	CGI::execute(std::string target)
 		av[0] = new char [_binary.length() + 1];
 		av[1] = new char [target.length() + 1];
 
-		close(fd[0]);
-		dup2(fd[1], STDOUT_FILENO);
-		close(fd[1]);
+		close(output_fd[0]);
+		dup2(output_fd[1], STDOUT_FILENO);
+		close(output_fd[1]);
 
-		// strcpy(av[0], "./a.out");
-		// strcpy(av[1], "test");
+		close(input_fd[1]);
+        dup2(input_fd[0], STDIN_FILENO);
+        close(input_fd[0]);
+
 		strcpy(av[0], _binary.c_str());
 		strcpy(av[1], target.c_str());
 		av[2] = NULL;
@@ -60,17 +68,19 @@ void	CGI::execute(std::string target)
 	{
 		int		status;
 
-		close(fd[1]);
+		close(input_fd[0]);
+        write(input_fd[1], _input.c_str(), _input.length());
+        close(input_fd[1]);
+
+		close(output_fd[1]);
 		waitpid(pid, &status, 0);
-		while ((ret = read(fd[0], tmp, 1023)) != 0)
+		while ((ret = read(output_fd[0], tmp, 1023)) != 0)
 		{
 			tmp[ret] = '\0';
 			output += std::string(tmp);
 		}
-		Console::info("Receive '" + output + "'");
 		_output = output;
 	}
-	
 }
 
 void	CGI::addMetaVariable(std::string name, std::string value)
@@ -100,4 +110,17 @@ char	**CGI::doubleStringToChar(DoubleString param)
 std::string		CGI::getOutput()
 {
 	return (_output);
+}
+
+void			CGI::convertHeadersToMetaVariables(Request request)
+{
+	DoubleString	headers = request.getHeaders();
+	for (DoubleString::iterator it = headers.begin(); it != headers.end(); it++)
+	{
+		std::string name = it->first;
+		std::string value = it->second;
+		Utils::to_upper(name);
+		name = Utils::replace(name, "-", "_");
+		this->addMetaVariable("HTTP_" + name, value);
+	}
 }

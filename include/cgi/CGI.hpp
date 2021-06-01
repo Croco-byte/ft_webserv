@@ -2,6 +2,7 @@
 # define CGI_HPP
 
 # include "utils/include.hpp"
+# include "request/Request.hpp"
 
 class CGI
 {
@@ -11,8 +12,10 @@ class CGI
 		virtual ~CGI();
 
 		void		setBinary(std::string path);
+		void		setInput(std::string content);
 		void		execute(std::string target);
 		void		addMetaVariable(std::string name, std::string value);
+		void		convertHeadersToMetaVariables(Request request);
 
 		std::string	getOutput();
 
@@ -24,7 +27,7 @@ class CGI
 		DoubleString	_argvVariables;
 		std::string		_binary;
 		std::string		_output;
-
+		std::string		_input;
 };
 
 #endif
