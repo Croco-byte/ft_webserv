@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/02 13:48:39 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/02 14:04:42 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,8 +112,15 @@ long				Server::send(long socket)
 		this->generateRedirection(response, virtualHost);
 	else
 		this->setResponseBody(response, request, route, virtualHost);
+<<<<<<< HEAD
 	this->setResponseHeaders(response, route, request);
 	std::string toSend = response.build(virtualHost.getErrors());
+=======
+	
+	this->setResponseHeaders(response, request, route);
+	std::string toSend = response.build();
+
+>>>>>>> 805e2cc117c2ae13987f61f040e06b64279dfec8
 	int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
 	std::cout << std::endl << GREEN << "------ Sent response ------" << std::endl << "[" << std::endl << toSend << std::endl << "]" << NC << std::endl << std::endl;
 	if (ret == -1)
@@ -207,9 +214,15 @@ void	Server::addVirtualHost(ServerConfiguration conf)
 /*
 ** ------ PRIVATE HELPERS : RESPONSE HEADERS HANDLERS ------
 */
+<<<<<<< HEAD
 void				Server::setResponseHeaders(Response & response, Route & route, Request & request)
+=======
+void				Server::setResponseHeaders(Response & response, Request request, Route & route)
+>>>>>>> 805e2cc117c2ae13987f61f040e06b64279dfec8
 {
 	response.setHeader("Content-Length", Utils::to_string(response.getBody().length()));
+	response.setHeader("Content-Location", request.getURL());
+	response.setHeader("Server", "webserv/1.0.0");
 	if (!route.getRouteLang().empty())
 		response.setHeader("Content-Language", route.getFormattedLang());
 	if (response.getStatus() == 301)
@@ -299,7 +312,35 @@ void				Server::handlePOSTRequest(Response & response, Request const & request, 
 		response.setBody(virtualHost.getErrorPage(403));
 	}
 	else if (this->requestRequireCGI(request, route))
-		response.setBody(this->execCGI(request, route, virtualHost));
+	{
+		std::string 	output;
+		DoubleString	CGIHeaders;
+		std::string		CGIBody;
+	
+		output = this->execCGI(request, route, virtualHost);
+
+		// SPLIT HEADERS AND BODY FROM CGI RETURN
+		std::istringstream			origStream(output);
+		std::string					curLine;
+		bool						inHeader = true;
+		std::string					body;
+
+		while (std::getline(origStream, curLine))
+		{
+			Console::error(Utils::to_string(inHeader));
+			if (curLine == "\r")
+				inHeader = false;
+			else
+			{
+				if (inHeader && Utils::split(curLine, ":").size() == 2)
+					response.setHeader(Utils::split(curLine, ":")[0], Utils::split(curLine, ":")[1]);
+				else if (!inHeader)
+					body += curLine + "\r\n";
+			}
+			Console::info("  => '" + curLine + "' ");
+			response.setBody(body);
+		}
+	}
 	else
 	{
 		response.setStatus(405);
@@ -327,8 +368,36 @@ void				Server::handleGETRequest(Response & response, Request const & request, R
 			body = autoindex.getIndex();
 		}
 	}
-	else if (this->requestRequireCGI(request, route))				// Might have to empty the Last-Modified header here, depends on CGI handling, since no "Last-Modified" is returned when CGI is called
-		body = this->execCGI(request, route, virtualHost);
+	else if (this->requestRequireCGI(request, route))
+	{
+		std::string 	output;
+		DoubleString	CGIHeaders;
+		std::string		CGIBody;
+	
+		output = this->execCGI(request, route, virtualHost);
+
+		// SPLIT HEADERS AND BODY FROM CGI RETURN
+		std::istringstream			origStream(output);
+		std::string					curLine;
+		bool						inHeader = true;
+		std::string					body;
+
+		while (std::getline(origStream, curLine))
+		{
+			Console::error(Utils::to_string(inHeader));
+			if (curLine == "\r")
+				inHeader = false;
+			else
+			{
+				if (inHeader && Utils::split(curLine, ":").size() == 2)
+					response.setHeader(Utils::split(curLine, ":")[0], Utils::split(curLine, ":")[1]);
+				else if (!inHeader)
+					body += curLine + "\r\n";
+			}
+			Console::info("  => '" + curLine + "' ");
+			response.setBody(body);
+		}
+	}
 	else
 	{
 		if (Utils::pathExists(targetPath) && Utils::isRegularFile(targetPath) && Utils::canOpenFile(targetPath))

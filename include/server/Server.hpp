@@ -44,7 +44,7 @@ class Server
 		std::map<long, std::string>						_requests;
 
 		/* PRIVATE HELPERS : RESPONSE HEADERS HANDLERS */
-		void							setResponseHeaders(Response & response, Route & route, Request & request);
+		void							setResponseHeaders(Response & response, Request request, Route & route);
 
 		/* PRIVATE HELPERS : RESPONSE BODY HANDLERS */
 		void							setResponseBody(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost);

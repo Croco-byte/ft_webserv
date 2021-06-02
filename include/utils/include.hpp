@@ -67,6 +67,7 @@ namespace Utils
 	bool						string_to_bool(std::string on);
 	std::string					bool_to_string(bool on);
 	std::string					join(std::vector<std::string> vec);
+	std::string					join(DoubleString map);
 	size_t						getCommonValues(std::vector<std::string> a, std::vector<std::string> b);
 	std::string					to_string(int nb);
 	std::string					to_string(char c);
