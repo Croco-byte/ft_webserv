@@ -118,7 +118,7 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 
 [TODO]	Valider le fichier de configuration
 
-[TODO]	Gerer les autres methodes (PUT, DELETE, HEAD, OPTION, TRACE)
+[DONE]	Gerer les autres methodes (PUT, DELETE)
 
 [DONE]	CGI : prefixe HTTP_ pour les headers
 		CGI : Passer les data POST au CGI sur l entree standard
@@ -145,3 +145,9 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 			> Transfer-Encoding
 			> User-Agent						OK
 			> WWW-Authenticate					OK
+
+
+[X]		Envoyer 4 fois la requête suivante via telnet produit des 400 Bad Requests car les deux lignes sont considérées comme des requêtes indépendantes :
+GET / HTTP/1.1
+Host: 127.0.0.1
+		Ce problème ne se produit pas sur navigateur, c'est peut-être lié à telnet ?

@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/27 17:58:54 by user42            #+#    #+#             */
-/*   Updated: 2021/05/29 13:36:37 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/02 13:37:26 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,11 +60,13 @@ void									ServerConfiguration::init_errors(void)
 	_errors[404] = "Not Found";
 	_errors[405] = "Method Not Allowed";
 	_errors[406] = "Non acceptable";
+	_errors[409] = "Conflict";
 	_errors[413] = "Request Entity Too Large";
 	_errors[500] = "Internal Server Error";
 	_errors[501] = "Not Implemented";
 	_errors[502] = "Bad Gateway";
 	_errors[503] = "Service Unavailable";
+	_errors[505] = "HTTP Version Not Supported";
 }
 
 void									ServerConfiguration::init_default_error_content(void)
@@ -105,6 +107,10 @@ void									ServerConfiguration::addRoute(Route route)
 
 std::string const &						ServerConfiguration::getName() const
 { return (_name); }
+
+std::map<int, std::string> const &		ServerConfiguration::getErrors(void) const
+{ return (_errors); }
+
 
 std::string const &						ServerConfiguration::getHost() const
 { return (_host); }

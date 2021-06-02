@@ -21,6 +21,7 @@ class	ServerConfiguration
 		void									addRoute(Route route);
 
 		std::string const &						getName()														const;
+		std::map<int, std::string> const &		getErrors(void)													const;
 		std::string const &						getHost()														const;
 		int										getPort()														const;
 		int										getLimit()														const;

@@ -42,15 +42,17 @@ class Server
 		long											_fd;
 		t_sockaddr_in									_addr;
 		std::map<long, std::string>						_requests;
-		int												_error_code;
 
 		/* PRIVATE HELPERS : RESPONSE HEADERS HANDLERS */
-		void							setResponseHeaders(Response & response, Route & route);
+		void							setResponseHeaders(Response & response, Route & route, Request & request);
 
 		/* PRIVATE HELPERS : RESPONSE BODY HANDLERS */
 		void							setResponseBody(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost);
-		void							handlePUTRequest(Request const & request, Response & response, std::string const & targetPath);
-		void							handleDELETERequest(Response & response, std::string const & targetPath);
+		void							handlePUTRequest(Request const & request, Response & response, std::string const & targetPath, ServerConfiguration & virtualHost);
+		void							handleDELETERequest(Response & response, std::string const & targetPath, ServerConfiguration & virtualHost);
+		void							handlePOSTRequest(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost);
+		void							handleGETRequest(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost);
+
 
 		/* PRIVATE HELPERS : REQUEST HEADER HANDLERS */
 		void							handleRequestHeaders(Request request, Response &reponse);
@@ -69,12 +71,12 @@ class Server
 
 		/* PRIVATE HELPERS : REDIRECTION HANDLERS*/
 		bool							requestRequireRedirection(Request request, Route & route);
-		void							generateRedirection(Request request, Response &response, Route & route);
+		void							generateRedirection(Response &response, ServerConfiguration & virtualHost);
 
 		/* PRIVATE HELPERS : ERRORS HANDLERS */
-		bool							requestIsValid(Request request, Route & route);
+		bool							requestIsValid(Response & response, Request request, Route & route);
 		bool							isMethodAccepted(Request request, Route & route);
-		void							handleRequestErrors(Request request, Response &response, Route & route, ServerConfiguration & virtualHost);
+		void							handleRequestErrors(Response &response, Route & route, ServerConfiguration & virtualHost);
 
 		/* PRIVATE HELPERS : AUTHORIZATION HANDLERS*/
 		void							handleUnauthorizedRequests(Response & response, ServerConfiguration & virtualHost);

@@ -8,44 +8,43 @@ class Request
 	public:
 		Request();
 
-		void									parseLang(void);
+		/* -- Request parsing functions -- */
 		void									load(std::string request);
-		void									print();
-		void									handleHeader(std::string header, std::string value);
-		void									setIP(std::string ip);
-		bool									hasAuthHeader(void) const;
 
-		std::vector<std::string>				getRequestLines() const;
+		/* -- Getters -- */
 		std::string								getMethod() const;
 		std::string								getURL() const;
 		std::string								getProtocolVersion() const;
 		DoubleString							getHeaders() const;
 		std::string								getBody() const;
-		std::string								getIP() const;
 		std::string								getQueryString();
+		int										getValidity(void) const;
 
-		void									getRequestBody(std::string const & request);
+		/* -- Checkers -- */
+		bool									hasAuthHeader(void) const;
 
 
 	private:
-
+		/* -- Private helpers : parsing utilities -- */
+		void									parseRequestFirstLine(std::string const & first_line);
 		std::string								generateQueryString(std::string line);
+		void									parseRequestHeaders(std::vector<std::string> const & request_lines);
+		void									parseLang(void);
+		void									parseRequestBody(std::string const & request);
 
-		std::vector<std::string>				request_lines;
 
-		std::string								method;
-		std::string								URL;
-		std::string								version;
-		std::string								_ip;
+		/* -- Class attributes -- */
+		std::string								_method;
+		std::string								_url;
+		std::string								_version;
+
 		std::map<float, std::string>			_lang;
+		DoubleString							_headers;
 
-		DoubleString							headers;
-
-		DoubleString							data;
-		std::string								data_str;
-		std::string								query_string;
+		std::string								_query_string;
 		std::string								_body;
-		bool									mustClose;
+
+		int										_invalid;
 };
 
 #endif

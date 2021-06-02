@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/01 10:17:59 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/02 13:48:39 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,6 @@
 ** ------ CONSTRUCTORS / DESTRUCTOR ------
 */
 Server::Server()
- : _error_code(0)
 {}
 
 Server::Server(const Server &x)
@@ -26,7 +25,6 @@ Server::Server(const Server &x)
 	_requests = x._requests;
 	if (!x._virtualHosts.empty())
 		_virtualHosts = x._virtualHosts;
-	_error_code = x._error_code;
 }
 
 Server::~Server()
@@ -103,25 +101,19 @@ long				Server::send(long socket)
 	request.load(request_str);
 
 	ServerConfiguration &	virtualHost = findVirtualHost(request.getHeaders());
-	Console::info("Transmitting request to virtual host " + virtualHost.getName() + " with server_root " + virtualHost.getServerRoot());
 	Route					route = findCorrespondingRoute(request.getURL(), virtualHost);
-
-	this->handleRequestHeaders(request, response);
+	Console::info("Transmitting request to virtual host " + virtualHost.getName() + " with server_root " + virtualHost.getServerRoot());
 	
-	if (route.requireAuth() && !request.hasAuthHeader())
+	if ((route.requireAuth() && !request.hasAuthHeader()) || (route.requireAuth() && request.hasAuthHeader() && !this->credentialsMatch(request.getHeaders()["Authorization"], route.getUserFile())))
 		this->handleUnauthorizedRequests(response, virtualHost);
-	else if (route.requireAuth() && request.hasAuthHeader() && !this->credentialsMatch(request.getHeaders()["Authorization"], route.getUserFile()))
-		this->handleUnauthorizedRequests(response, virtualHost);
-	else if (!this->requestIsValid(request, route))
-		this->handleRequestErrors(request, response, route, virtualHost);
+	else if (!this->requestIsValid(response, request, route))
+		this->handleRequestErrors(response, route, virtualHost);
 	else if (requestRequireRedirection(request, route))
-		this->generateRedirection(request, response, route);
+		this->generateRedirection(response, virtualHost);
 	else
 		this->setResponseBody(response, request, route, virtualHost);
-	
-	this->setResponseHeaders(response, route);
-	std::string toSend = response.build();
-
+	this->setResponseHeaders(response, route, request);
+	std::string toSend = response.build(virtualHost.getErrors());
 	int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
 	std::cout << std::endl << GREEN << "------ Sent response ------" << std::endl << "[" << std::endl << toSend << std::endl << "]" << NC << std::endl << std::endl;
 	if (ret == -1)
@@ -164,7 +156,6 @@ long				Server::accept(void)
 }
 
 
-
 /*
 ** ------ GETTERS / SETTERS ------
 */
@@ -183,7 +174,6 @@ ServerConfiguration &					Server::getVHConfig(std::string const & server_name)
 	}
 	return (getDefaultVHConfig());
 }
-
 
 ServerConfiguration &					Server::getDefaultVHConfig(void)
 { return (_virtualHosts[0]); }
@@ -204,7 +194,6 @@ ServerConfiguration &					Server::findVirtualHost(DoubleString const & headers)
 	return (getDefaultVHConfig());
 }
 
-
 void	Server::addVirtualHost(ServerConfiguration conf)
 {
 	if (!_virtualHosts.empty())
@@ -218,11 +207,13 @@ void	Server::addVirtualHost(ServerConfiguration conf)
 /*
 ** ------ PRIVATE HELPERS : RESPONSE HEADERS HANDLERS ------
 */
-void				Server::setResponseHeaders(Response & response, Route & route)
+void				Server::setResponseHeaders(Response & response, Route & route, Request & request)
 {
 	response.setHeader("Content-Length", Utils::to_string(response.getBody().length()));
 	if (!route.getRouteLang().empty())
 		response.setHeader("Content-Language", route.getFormattedLang());
+	if (response.getStatus() == 301)
+		response.setHeader("Location", request.getURL() + "/");
 }
 
 /*
@@ -230,46 +221,19 @@ void				Server::setResponseHeaders(Response & response, Route & route)
 */
 void				Server::setResponseBody(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost)
 {
-	std::string		body;
 	std::string		targetPath = getLocalPath(request, route);
-	std::string		lastModified = Utils::getLastModified(targetPath);
 
 	if (request.getMethod() == "PUT")
-		this->handlePUTRequest(request, response, targetPath);
+		this->handlePUTRequest(request, response, targetPath, virtualHost);
 	else if (request.getMethod() == "DELETE")
-		this->handleDELETERequest(response, targetPath);
-	else if (Utils::isDirectory(targetPath))
-	{
-		std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
-		if (Utils::pathExists(indexPath) && Utils::isRegularFile(indexPath) && Utils::canOpenFile(indexPath))
-		{
-			response.setHeader("Last-Modified", lastModified);
-			body = Utils::getFileContent(indexPath);
-		}
-		else if (route.autoIndex())
-		{
-			AutoIndex autoindex(request.getURL(), targetPath);
-			autoindex.createIndex();
-			body = autoindex.getIndex();
-		}
-	}
-	else if (this->requestRequireCGI(request, route))
-	{
-		response.setHeader("Last-Modified", lastModified);
-		body = this->execCGI(request, route, virtualHost);
-	}
-	else
-	{
-		if (Utils::pathExists(targetPath) && Utils::isRegularFile(targetPath) && Utils::canOpenFile(targetPath))
-		{
-			response.setHeader("Last-Modified", lastModified);
-			body = Utils::getFileContent(targetPath);
-		}
-	}
-	response.setBody(body);
+		this->handleDELETERequest(response, targetPath, virtualHost);
+	else if (request.getMethod() == "POST")
+		this->handlePOSTRequest(response, request, route, virtualHost);
+	else if (request.getMethod() == "GET")
+		this->handleGETRequest(response, request, route, virtualHost);
 }
 
-void				Server::handlePUTRequest(Request const & request, Response & response, std::string const & targetPath)		// Still have to set body for 403 and 409
+void				Server::handlePUTRequest(Request const & request, Response & response, std::string const & targetPath, ServerConfiguration & virtualHost)
 {
 	std::ofstream file;
 	if (Utils::isRegularFile(targetPath))
@@ -280,12 +244,18 @@ void				Server::handlePUTRequest(Request const & request, Response & response, s
 		response.setStatus(204);
 	}
 	else if (Utils::isDirectory(targetPath))
+	{
 		response.setStatus(409);
+		response.setBody(virtualHost.getErrorPage(409));
+	}
 	else
 	{
 		file.open(targetPath.c_str(), std::ofstream::out | std::ofstream::trunc);
 		if (!(file.is_open() && file.good()))
+		{
 			response.setStatus(403);
+			response.setBody(virtualHost.getErrorPage(403));
+		}
 		else
 		{
 			file << request.getBody();
@@ -294,38 +264,83 @@ void				Server::handlePUTRequest(Request const & request, Response & response, s
 	}
 }
 
-void				Server::handleDELETERequest(Response & response, std::string const & targetPath)		// Still have to set body for 403 and 404
+void				Server::handleDELETERequest(Response & response, std::string const & targetPath, ServerConfiguration & virtualHost)
 {
 	if (Utils::isRegularFile(targetPath))
 	{
 		if (remove(targetPath.c_str()) == 0)
 			response.setStatus(204);
 		else
+		{
 			response.setStatus(403);
+			response.setBody(virtualHost.getErrorPage(403));
+		}
 	}
 	else if (Utils::isDirectory(targetPath))
+	{
 		response.setStatus(403);
+		response.setBody(virtualHost.getErrorPage(403));
+	}
 	else
+	{
 		response.setStatus(404);
+		response.setBody(virtualHost.getErrorPage(404));
+	}
 }
 
+// Trying to serve a directory with POST returns 403 ; trying to serve static content with POST returns 405
+void				Server::handlePOSTRequest(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost)
+{
+	std::string		targetPath = getLocalPath(request, route);
+
+	if (Utils::isDirectory(targetPath))
+	{
+		response.setStatus(403);
+		response.setBody(virtualHost.getErrorPage(403));
+	}
+	else if (this->requestRequireCGI(request, route))
+		response.setBody(this->execCGI(request, route, virtualHost));
+	else
+	{
+		response.setStatus(405);
+		response.setBody(virtualHost.getErrorPage(405));
+	}
+}
+
+void				Server::handleGETRequest(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost)
+{
+	std::string		body;
+	std::string		targetPath = getLocalPath(request, route);
+	std::string		lastModified = Utils::getLastModified(targetPath);
+
+	response.setHeader("Last-Modified", lastModified);
+	if (Utils::isDirectory(targetPath))
+	{
+		std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
+		if (Utils::pathExists(indexPath) && Utils::isRegularFile(indexPath) && Utils::canOpenFile(indexPath))
+			body = Utils::getFileContent(indexPath);
+		else if (route.autoIndex())
+		{
+			response.setHeader("Last-Modified", "");
+			AutoIndex autoindex(request.getURL(), targetPath);
+			autoindex.createIndex();
+			body = autoindex.getIndex();
+		}
+	}
+	else if (this->requestRequireCGI(request, route))				// Might have to empty the Last-Modified header here, depends on CGI handling, since no "Last-Modified" is returned when CGI is called
+		body = this->execCGI(request, route, virtualHost);
+	else
+	{
+		if (Utils::pathExists(targetPath) && Utils::isRegularFile(targetPath) && Utils::canOpenFile(targetPath))
+			body = Utils::getFileContent(targetPath);
+	}
+	response.setBody(body);
+}
 
 
 /*
 ** ------ PRIVATE HELPERS : HEADER HANDLERS ------
 */
-void				Server::handleRequestHeaders(Request request, Response &response)
-{
-	DoubleString				headers = request.getHeaders();
-	(void)response;
-	for (DoubleString::iterator it = headers.begin(); it != headers.end(); it++)
-	{
-		// if (it->first == "Accept-Charset")
-		// 	this->handleCharset(Utils::split(it->second, ","), response);
-		//if (it->first == "Accept-Language")
-		//	this->handleLanguage(request, Utils::split(it->second, ","), response);
-	}
-}
 
 bool				Server::isCharsetValid(Request request)
 {
@@ -351,57 +366,10 @@ bool				Server::isCharsetValid(Request request)
 	return (false);
 }
 
-/*
-void	Server::handleLanguage(Request request, std::vector<std::string> vecLang, Response &response)
-{
-	for (std::vector<std::string>::iterator it = vecLang.begin(); it != vecLang.end(); it++)
-		*it = Utils::to_lower(Utils::trim(*it));
-
-	if (vecLang.size() == 1 && vecLang[0] != "*")
-	{
-		if (Utils::pathExists(request.getURL() + "." + vecLang[0]))
-		{
-			response.setHeader("Content-Language", vecLang[0]);
-			return ;
-		}
-	}
-	else if (vecLang.size() > 1)
-	{
-		std::map<float, std::string>	mapLang;
-		for (std::vector<std::string>::iterator it = vecLang.begin(); it != vecLang.end(); it++)
-		{
-			std::vector<std::string> tmpVec = Utils::split(*it, ";");
-
-			float coef;
-			std::string	lang = Utils::trim(tmpVec[0]);
-
-			if (tmpVec.size() == 2)
-			{
-				tmpVec[1] = Utils::trim(tmpVec[1]);
-				tmpVec[1] = tmpVec[1].substr(2, tmpVec[1].length() - 2);
-				coef = std::atof(tmpVec[1].c_str());
-			}
-			else
-				coef = 1.f;
-			mapLang[coef] = lang;
-		}
-
-		for (std::map<float, std::string>::reverse_iterator it = mapLang.rbegin(); it != mapLang.rend(); it++)
-		{
-			if (Utils::pathExists(request.getURL() + "." + it->second))
-			{
-				response.setHeader("Content-Language", it->second);
-				return ;
-			}
-		}
-	}
-} */
-
 
 /*
 ** ------ PRIVATE HELPERS : URL HANDLERS ------
 */
-
 Route		Server::findCorrespondingRoute(std::string URL, ServerConfiguration & virtualHost)
 {
 	std::vector<Route>				routes = virtualHost.getRoutes();
@@ -445,11 +413,9 @@ std::string	Server::getLocalPath(Request request, Route route)
 }
 
 
-
 /*
 ** ------ PRIVATE HELPERS : CGI HANDLERS ------
 */
-
 std::string		Server::execCGI(Request request, Route & route, ServerConfiguration & virtualHost)
 {
 	std::string	targetPath;
@@ -480,7 +446,6 @@ bool		Server::requestRequireCGI(Request request, Route route)
 	std::vector<std::string>	vecExtensions = route.getCGIExtensions();
 	std::string					localPath = this->getLocalPath(request, route);
 	
-	// If the extension of the request file is a cgi extension
 	if (Utils::find_in_vector(vecExtensions, "." + Utils::get_file_extension(localPath)))
 		return (true);
 	return (false);
@@ -491,7 +456,6 @@ void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route, Se
 	DoubleString	headers = request.getHeaders();
 	std::string		targetPath = getLocalPath(request, route);
 
-	request.print();
 	cgi.addMetaVariable("GATEWAY_INTERFACE", "CGI/1.1");
 	cgi.addMetaVariable("SERVER_NAME", virtualHost.getName());
 	cgi.addMetaVariable("SERVER_SOFTWARE", "webserv/1.0");
@@ -537,62 +501,60 @@ bool		Server::requestRequireRedirection(Request request, Route & route)
 	return (false);
 }
 
-void		Server::generateRedirection(Request request, Response &response, Route & route)
+void		Server::generateRedirection(Response &response, ServerConfiguration & virtualHost)
 {
-	std::string		targetPath = getLocalPath(request, route);
-
 	response.setStatus(301);
-	response.setHeader("Location", request.getURL() + "/");
+	response.setBody(virtualHost.getErrorPage(301));
 }
 
 
 /*
 ** ------ PRIVATE HELPERS : ERRORS HANDLERS ------
 */
-bool		Server::requestIsValid(Request request, Route & route)
+bool		Server::requestIsValid(Response & response, Request request, Route & route)
 {
 	std::string		targetPath = getLocalPath(request, route);
-
+	if (request.getValidity() != 0)
+	{
+		response.setStatus(request.getValidity());
+		return (false);
+	}
 	if (this->check403(request, route))
 	{
-		_error_code = 403;
+		response.setStatus(403);
 		return (false);
 	}
 	else if ((request.getMethod() == "GET" || request.getMethod() == "POST") && !Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
 	{
-		_error_code = 404;
+		response.setStatus(404);
 		return (false);
 	}
 	else if (!this->isMethodAccepted(request, route))
 	{
-		_error_code = 405;
+		response.setStatus(405);
 		return (false);
 	}
 	else if (!this->isCharsetValid(request))
 	{
-		_error_code = 406;
+		response.setStatus(406);
 		return (false);
 	}
 	return (true);
 }
 
-void		Server::handleRequestErrors(Request request, Response &response, Route & route, ServerConfiguration & virtualHost)
+void		Server::handleRequestErrors(Response &response, Route & route, ServerConfiguration & virtualHost)
 {
-	std::string					targetPath = getLocalPath(request, route);
 	std::vector<std::string>	vecMethods = route.getAcceptedMethods();
 
 	for (std::vector<std::string>::iterator it = vecMethods.begin(); it != vecMethods.end(); it++)
 		*it = Utils::to_upper(*it);
-	if (_error_code == 405)
+	if (response.getStatus() == 405)
 		response.setHeader("Allow", Utils::join(vecMethods));
-	response.setStatus(_error_code);
-	response.setBody(virtualHost.getErrorPage(_error_code));
+	response.setBody(virtualHost.getErrorPage(response.getStatus()));
 }
 
 bool		Server::isMethodAccepted(Request request, Route & route)
-{
-	return (route.acceptMethod(request.getMethod()));
-}
+{ return (route.acceptMethod(request.getMethod())); }
 
 
 /*
