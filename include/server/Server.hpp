@@ -42,6 +42,9 @@ class Server
 		long											_fd;
 		t_sockaddr_in									_addr;
 		std::map<long, std::string>						_requests;
+		DoubleString									_extensionMIMEType;
+
+		void							initMIMEType();
 
 		/* PRIVATE HELPERS : RESPONSE HEADERS HANDLERS */
 		void							setResponseHeaders(Response & response, Route & route, Request & request);
