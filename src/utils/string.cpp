@@ -150,6 +150,19 @@ namespace Utils
 		return (ret);
 	}
 
+	std::string join(DoubleString map)
+	{
+		std::string output = "";
+		std::string result = "";
+
+		for (DoubleString::iterator it = map.begin(); it != map.end(); it++)
+			output += (it->first) + ":" + it->second + ", ";
+			
+		result = output.substr(0, output.size() - 2 );
+			
+		return result;
+	}
+
 	std::string	bool_to_string(bool on)
 	{
 		if (on)

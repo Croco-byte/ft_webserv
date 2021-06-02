@@ -119,7 +119,7 @@ long				Server::send(long socket)
 	else
 		this->setResponseBody(response, request, route, virtualHost);
 	
-	this->setResponseHeaders(response, route);
+	this->setResponseHeaders(response, request, route);
 	std::string toSend = response.build();
 
 	int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
@@ -218,9 +218,11 @@ void	Server::addVirtualHost(ServerConfiguration conf)
 /*
 ** ------ PRIVATE HELPERS : RESPONSE HEADERS HANDLERS ------
 */
-void				Server::setResponseHeaders(Response & response, Route & route)
+void				Server::setResponseHeaders(Response & response, Request request, Route & route)
 {
 	response.setHeader("Content-Length", Utils::to_string(response.getBody().length()));
+	response.setHeader("Content-Location", request.getURL());
+	response.setHeader("Server", "webserv/1.0.0");
 	if (!route.getRouteLang().empty())
 		response.setHeader("Content-Language", route.getFormattedLang());
 }
@@ -255,8 +257,32 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 	}
 	else if (this->requestRequireCGI(request, route))
 	{
+		std::string 	output;
+		DoubleString	CGIHeaders;
+		std::string		CGIBody;
+	
 		response.setHeader("Last-Modified", lastModified);
-		body = this->execCGI(request, route, virtualHost);
+		output = this->execCGI(request, route, virtualHost);
+
+		// SPLIT HEADERS AND BODY FROM CGI RETURN
+		std::istringstream			origStream(output);
+		std::string					curLine;
+		bool						inHeader = true;
+
+		while (std::getline(origStream, curLine))
+		{
+			Console::error(Utils::to_string(inHeader));
+			if (curLine == "\r")
+				inHeader = false;
+			else
+			{
+				if (inHeader && Utils::split(curLine, ":").size() == 2)
+					response.setHeader(Utils::split(curLine, ":")[0], Utils::split(curLine, ":")[1]);
+				else if (!inHeader)
+					body += curLine + "\r\n";
+			}
+			Console::info("  => '" + curLine + "' ");
+		}
 	}
 	else
 	{
@@ -350,52 +376,6 @@ bool				Server::isCharsetValid(Request request)
 	}
 	return (false);
 }
-
-/*
-void	Server::handleLanguage(Request request, std::vector<std::string> vecLang, Response &response)
-{
-	for (std::vector<std::string>::iterator it = vecLang.begin(); it != vecLang.end(); it++)
-		*it = Utils::to_lower(Utils::trim(*it));
-
-	if (vecLang.size() == 1 && vecLang[0] != "*")
-	{
-		if (Utils::pathExists(request.getURL() + "." + vecLang[0]))
-		{
-			response.setHeader("Content-Language", vecLang[0]);
-			return ;
-		}
-	}
-	else if (vecLang.size() > 1)
-	{
-		std::map<float, std::string>	mapLang;
-		for (std::vector<std::string>::iterator it = vecLang.begin(); it != vecLang.end(); it++)
-		{
-			std::vector<std::string> tmpVec = Utils::split(*it, ";");
-
-			float coef;
-			std::string	lang = Utils::trim(tmpVec[0]);
-
-			if (tmpVec.size() == 2)
-			{
-				tmpVec[1] = Utils::trim(tmpVec[1]);
-				tmpVec[1] = tmpVec[1].substr(2, tmpVec[1].length() - 2);
-				coef = std::atof(tmpVec[1].c_str());
-			}
-			else
-				coef = 1.f;
-			mapLang[coef] = lang;
-		}
-
-		for (std::map<float, std::string>::reverse_iterator it = mapLang.rbegin(); it != mapLang.rend(); it++)
-		{
-			if (Utils::pathExists(request.getURL() + "." + it->second))
-			{
-				response.setHeader("Content-Language", it->second);
-				return ;
-			}
-		}
-	}
-} */
 
 
 /*

@@ -133,15 +133,15 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 			> Authorization						OK
 			> Content-Language					OK
 			> Content-Length					OK
-			> Content-Location
+			> Content-Location					OK
 			> Content-Type
 			> Date								OK
 			> Host								OK
 			> Last-Modified						OK
-			> Location
+			> Location							OK
 			> Referrer
 			> Retry-After
-			> Server
+			> Server							OK
 			> Transfer-Encoding
 			> User-Agent						OK
 			> WWW-Authenticate					OK

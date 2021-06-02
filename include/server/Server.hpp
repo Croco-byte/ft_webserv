@@ -45,7 +45,7 @@ class Server
 		int												_error_code;
 
 		/* PRIVATE HELPERS : RESPONSE HEADERS HANDLERS */
-		void							setResponseHeaders(Response & response, Route & route);
+		void							setResponseHeaders(Response & response, Request request, Route & route);
 
 		/* PRIVATE HELPERS : RESPONSE BODY HANDLERS */
 		void							setResponseBody(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost);
