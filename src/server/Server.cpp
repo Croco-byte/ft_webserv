@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/02 14:04:42 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/02 14:17:07 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,15 +112,8 @@ long				Server::send(long socket)
 		this->generateRedirection(response, virtualHost);
 	else
 		this->setResponseBody(response, request, route, virtualHost);
-<<<<<<< HEAD
 	this->setResponseHeaders(response, route, request);
 	std::string toSend = response.build(virtualHost.getErrors());
-=======
-	
-	this->setResponseHeaders(response, request, route);
-	std::string toSend = response.build();
-
->>>>>>> 805e2cc117c2ae13987f61f040e06b64279dfec8
 	int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
 	std::cout << std::endl << GREEN << "------ Sent response ------" << std::endl << "[" << std::endl << toSend << std::endl << "]" << NC << std::endl << std::endl;
 	if (ret == -1)
@@ -214,11 +207,7 @@ void	Server::addVirtualHost(ServerConfiguration conf)
 /*
 ** ------ PRIVATE HELPERS : RESPONSE HEADERS HANDLERS ------
 */
-<<<<<<< HEAD
 void				Server::setResponseHeaders(Response & response, Route & route, Request & request)
-=======
-void				Server::setResponseHeaders(Response & response, Request request, Route & route)
->>>>>>> 805e2cc117c2ae13987f61f040e06b64279dfec8
 {
 	response.setHeader("Content-Length", Utils::to_string(response.getBody().length()));
 	response.setHeader("Content-Location", request.getURL());
@@ -305,7 +294,6 @@ void				Server::handleDELETERequest(Response & response, std::string const & tar
 void				Server::handlePOSTRequest(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost)
 {
 	std::string		targetPath = getLocalPath(request, route);
-
 	if (Utils::isDirectory(targetPath))
 	{
 		response.setStatus(403);
@@ -514,7 +502,6 @@ bool		Server::requestRequireCGI(Request request, Route route)
 {
 	std::vector<std::string>	vecExtensions = route.getCGIExtensions();
 	std::string					localPath = this->getLocalPath(request, route);
-	
 	if (Utils::find_in_vector(vecExtensions, "." + Utils::get_file_extension(localPath)))
 		return (true);
 	return (false);
