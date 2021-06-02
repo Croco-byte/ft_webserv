@@ -311,4 +311,29 @@ namespace Utils
 		}
 		return (src);
 	}
+
+	bool						receivedLastChunk(std::string const & request)
+	{
+		std::string temp = request.substr(request.size() - 5);
+		printf("[DEBUG] %u-%u-%u-%u-%u\n", temp[0], temp[1], temp[2], temp[3], temp[4]);
+		if (temp.find("0\r\n\r\n") != std::string::npos)
+			return (true);
+		return (false);
+	}
+
+	size_t						extractContentLength(std::string const & request)
+	{
+		size_t i = request.find("Content-Length: ");
+		i += 16;
+
+		size_t temp(i);
+		size_t count(0);
+		while (std::isdigit(request[temp]))
+		{
+			count++;
+			temp++;
+		}
+		size_t result = std::atoi(request.substr(i, count).c_str());
+		return (result);
+	}
 }

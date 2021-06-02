@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/02 14:17:07 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/02 17:16:09 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,7 +128,7 @@ long				Server::send(long socket)
 long				Server::recv(long socket)
 {
 	char buffer[2048] = {0};
-	int ret;
+	long ret;
 
 	ret = ::recv(socket, buffer, 2047, 0);
 	if (ret == 0 || ret == -1)
@@ -141,8 +141,37 @@ long				Server::recv(long socket)
 		return (-1);
 	}
 	_requests[socket] += std::string(buffer);
-	std::cout << std::endl << CYAN << "------ Received request ------" << std::endl << "[" << std::endl << _requests[socket] << "]" << NC << std::endl << std::endl;
-	return (0);
+
+	ret = 0;
+	size_t i = _requests[socket].find("\r\n\r\n");
+	if (i != std::string::npos)															// If we finished to parse the headers...
+	{
+		if (_requests[socket].find("Transfer-Encoding: chunked") != std::string::npos)	// If there is a Transfer-Encoding: chunked, it has the priority. If we received the end of the chunked message, we finished receiving the request.
+		{
+			if (Utils::receivedLastChunk(_requests[socket]))
+				ret = 0;
+			else
+				ret = 1;
+		}
+		else if (_requests[socket].find("Content-Length: ") != std::string::npos)		// If there is no Transfer-Encoding: chunked, let's check if there is a Content-Length.
+		{
+			size_t len = Utils::extractContentLength(_requests[socket]);
+			if (_requests[socket].size() >= i + 4 + len)
+				ret = 0;
+			else
+				ret = 1;
+		}
+		else
+			ret = 0;																	// We finished parsing the headers and there is no body : we received the whole request
+	}
+	else
+		ret = 1;
+
+	if (ret == 0)
+		std::cout << std::endl << CYAN << "------ Received request ------" << std::endl << "[" << std::endl << _requests[socket] << "]" << NC << std::endl << std::endl;
+	else if (ret == 1)
+		std::cout << "[DEBUG] We did not receive the whole request. Looping..." << std::endl;
+	return (ret);
 }
 
 long				Server::accept(void)
@@ -216,6 +245,8 @@ void				Server::setResponseHeaders(Response & response, Route & route, Request &
 		response.setHeader("Content-Language", route.getFormattedLang());
 	if (response.getStatus() == 301)
 		response.setHeader("Location", request.getURL() + "/");
+	if (response.getStatus() == 503)
+		response.setHeader("Retry-After", "120");
 }
 
 /*
