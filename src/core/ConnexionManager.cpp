@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 10:31:05 by user42            #+#    #+#             */
-/*   Updated: 2021/06/02 15:43:34 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/03 16:46:23 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,7 @@ void			ConnexionManager::run(void)
 				FD_SET(*it, &writing_set);
 
 			ret = select(_max_fd + 1, &reading_set, &writing_set, 0, &timeout);
+			this->handleIncompleteRequests(reading_set);
 		}
 
 		if (ret > 0)
@@ -103,7 +104,7 @@ void			ConnexionManager::run(void)
 				{
 					long	ret = _read_fds[*it]->send(*it);								// Make the server associated with writing fd call send() to this fd (the server associated with the fd will be the one that recieved data on this fd, so _read_fds[*it])
 					
-					if (ret == 0)														// We sent data without errors, and the whole response has been sent
+					if (ret == 0)															// We sent data without errors, and the whole response has been sent
 						_write_fds.erase(it);
 					else if (ret == -1)
 					{
@@ -118,23 +119,33 @@ void			ConnexionManager::run(void)
 				}
 			}
 
-			for (std::map<long,Server *>::iterator it = _read_fds.begin() ; ret && it != _read_fds.end(); it++)
+			for (std::map<long,Server *>::iterator it = _read_fds.begin(); ret && it != _read_fds.end(); it++)
 			{
 				long	socket = it->first;
-
+				
 				if (FD_ISSET(socket, &reading_set))
 				{
+					std::vector<long>::iterator incompleteIt = find(_incompleteRequests.begin(), _incompleteRequests.end(), socket);
 					long	ret = it->second->recv(socket);
-
-					if (ret == 0)								// We recieved the data without errors
+				
+					if (ret == 0)
+					{
 						_write_fds.push_back(socket);
-					else if (ret == -1)							// Error while receiving data. Closing connection.
+						if (incompleteIt != _incompleteRequests.end())
+							_incompleteRequests.erase(incompleteIt);
+					}
+					else if (ret == -1)
 					{
 						FD_CLR(socket, &_fd_set);
 						FD_CLR(socket, &reading_set);
 						_read_fds.erase(socket);
 						it = _read_fds.begin();
+						if (incompleteIt != _incompleteRequests.end())
+							_incompleteRequests.erase(incompleteIt);
 					}
+					else
+						if (incompleteIt == _incompleteRequests.end())
+							_incompleteRequests.push_back(socket);
 
 					ret = 0;
 					break ;
@@ -171,6 +182,23 @@ void			ConnexionManager::run(void)
 			_write_fds.clear();
 			for (std::map<long, Server *>::iterator it = _listen_fds.begin() ; it != _listen_fds.end() ; it++)
 				FD_SET(it->first, &_fd_set);
+		}
+	}
+}
+
+void			ConnexionManager::handleIncompleteRequests(fd_set reading_set)
+{
+	for(std::map<long,Server *>::iterator it = _read_fds.begin(); it != _read_fds.end(); it++)
+	{
+		long	socket = it->first;
+		if (find(_incompleteRequests.begin(), _incompleteRequests.end(), socket) != _incompleteRequests.end() && !FD_ISSET(socket, &reading_set))
+		{
+			Console::info("Client stopped transmitting data on an incomplete request ; bouncing the client with socket " + Utils::to_string(socket) + " on server [" + (it->second)->getVirtualHosts()[0].getHost() + ":" + Utils::to_string((it->second)->getVirtualHosts()[0].getPort()) + "]");
+			(it->second)->resetSocket(socket);
+			close(socket);
+			FD_CLR(socket, &_fd_set);
+			_read_fds.erase(socket);
+			_incompleteRequests.erase(find(_incompleteRequests.begin(), _incompleteRequests.end(), socket));
 		}
 	}
 }

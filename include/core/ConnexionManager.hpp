@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 10:19:29 by user42            #+#    #+#             */
-/*   Updated: 2021/05/29 13:17:05 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/03 16:40:10 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,16 +36,18 @@ class	ConnexionManager
 		void							addServer(Server toAdd);
 
 		/* --- GETTERS | SETTERS ---*/
-		std::vector<Server> &		getServers(void);
+		std::vector<Server> &			getServers(void);
 
 	private:
 		ConnexionManager(ConnexionManager const & src);
 		ConnexionManager &			operator=(ConnexionManager const & rhs);
+		void						handleIncompleteRequests(fd_set reading_set);
 
 		std::vector<Server>			_vecServers;
 		std::map<long,Server *>		_listen_fds;
 		std::map<long,Server *>		_read_fds;
 		std::vector<int>			_write_fds;
+		std::vector<long>			_incompleteRequests;
 
 		fd_set						_fd_set;
 		unsigned int				_fd_size;

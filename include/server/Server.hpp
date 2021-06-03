@@ -25,6 +25,7 @@ class Server
 		long									send(long socket);
 		long									recv(long socket);
 		long									accept(void);
+		void									resetSocket(long socket);
 
 		/* GETTERS | SETTERS */
 		long									getFD(void) const;
