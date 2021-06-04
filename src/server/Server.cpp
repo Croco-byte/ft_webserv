@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/04 14:49:07 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/04 16:40:59 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -667,6 +667,7 @@ void		Server::generateRedirection(Response &response, ServerConfiguration & virt
 bool		Server::requestIsValid(Response & response, Request request, Route & route)
 {
 	std::string		targetPath = getLocalPath(request, route);
+	std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
 	if (request.getValidity() != 0)
 	{
 		response.setStatus(request.getValidity());
@@ -678,6 +679,11 @@ bool		Server::requestIsValid(Response & response, Request request, Route & route
 		return (false);
 	}
 	else if ((request.getMethod() == "GET" || request.getMethod() == "POST") && !Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
+	{
+		response.setStatus(404);
+		return (false);
+	}
+	else if (Utils::isDirectory(targetPath) && (!route.autoIndex() && !Utils::pathExists(indexPath)))
 	{
 		response.setStatus(404);
 		return (false);
@@ -752,7 +758,7 @@ bool		Server::check403(Request request, Route route)
 		else if (route.autoIndex())
 			return (false);
 		else
-			return (true);
+			return (false);
 	}
 	else if (Utils::pathExists(targetPath) && Utils::isRegularFile(targetPath) && !Utils::canOpenFile(targetPath))
 		return (true);
