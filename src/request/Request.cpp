@@ -189,7 +189,7 @@ void				Request::parseRequestChunkedBody(std::string const & request)
 		size_t		start_data_pos = end_line_pos + 2;
 		result += tmp.substr(start_data_pos, nb);
 		Console::info("Read " + Utils::to_string(nb) + " bytes :");
-		Console::info("DATA => [" + result + "]");
+		// Console::info("DATA => [" + result + "]");
 		i += start_data_pos + nb + 1;
 	}
 	_body = result;
