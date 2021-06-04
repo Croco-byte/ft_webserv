@@ -273,6 +273,7 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 		this->handlePOSTRequest(response, request, route, virtualHost);
 	else if (request.getMethod() == "GET")
 		this->handleGETRequest(response, request, route, virtualHost);
+		
 }
 
 void				Server::handlePUTRequest(Request const & request, Response & response, std::string const & targetPath, ServerConfiguration & virtualHost)
@@ -382,6 +383,7 @@ void				Server::handleGETRequest(Response & response, Request const & request, R
 	std::string		targetPath = getLocalPath(request, route);
 	std::string		lastModified = Utils::getLastModified(targetPath);
 
+	Console::error("Target path => " + targetPath);
 	response.setHeader("Last-Modified", lastModified);
 	if (Utils::isDirectory(targetPath))
 	{
@@ -667,6 +669,8 @@ void		Server::generateRedirection(Response &response, ServerConfiguration & virt
 bool		Server::requestIsValid(Response & response, Request request, Route & route)
 {
 	std::string		targetPath = getLocalPath(request, route);
+	std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
+	
 	if (request.getValidity() != 0)
 	{
 		response.setStatus(request.getValidity());
@@ -679,6 +683,12 @@ bool		Server::requestIsValid(Response & response, Request request, Route & route
 	}
 	else if ((request.getMethod() == "GET" || request.getMethod() == "POST") && !Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
 	{
+		response.setStatus(404);
+		return (false);
+	}
+	else if (Utils::isDirectory(targetPath) && (!route.autoIndex() && !Utils::pathExists(indexPath)))
+	{
+		Console::error("test");
 		response.setStatus(404);
 		return (false);
 	}
@@ -752,7 +762,7 @@ bool		Server::check403(Request request, Route route)
 		else if (route.autoIndex())
 			return (false);
 		else
-			return (true);
+			return (false); //return (true); NGINX != ubuntu_tester
 	}
 	else if (Utils::pathExists(targetPath) && Utils::isRegularFile(targetPath) && !Utils::canOpenFile(targetPath))
 		return (true);
