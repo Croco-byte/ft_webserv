@@ -81,6 +81,7 @@ namespace Utils
 	size_t						extractContentLength(std::string const & request);
 	std::vector<std::string>	divise_string(std::string str, unsigned int nb);
 	std::string					dec_to_hex(int nb);
+	int							hex_to_dec(std::string hex);
 
 
 

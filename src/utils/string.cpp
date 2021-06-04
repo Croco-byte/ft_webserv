@@ -366,4 +366,14 @@ namespace Utils
 		ss<< std::hex << nb;
 		return (ss.str());
 	}
+
+	int							hex_to_dec(std::string hex)
+	{
+		int	ret;
+
+		std::stringstream	stream;
+		stream << hex;
+    	stream >> std::hex >> ret;
+		return (ret);
+	}
 }

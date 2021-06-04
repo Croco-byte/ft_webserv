@@ -31,6 +31,7 @@ class Request
 		void									parseRequestHeaders(std::vector<std::string> const & request_lines);
 		void									parseLang(void);
 		void									parseRequestBody(std::string const & request);
+		void									parseRequestChunkedBody(std::string const &request);
 
 
 		/* -- Class attributes -- */
