@@ -100,6 +100,7 @@ long				Server::send(long socket)
 	Response				response;
 
 	std::string request_str = _requests[socket];
+	Console::error(Utils::to_string(socket));
 	_requests.erase(socket);
 	request.load(request_str);
 
@@ -115,17 +116,60 @@ long				Server::send(long socket)
 		this->generateRedirection(response, virtualHost);
 	else
 		this->setResponseBody(response, request, route, virtualHost);
+
 	this->setResponseHeaders(response, route, request);
-	std::string toSend = response.build(virtualHost.getErrors());
-	int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
-	std::cout << std::endl << GREEN << "------ Sent response ------" << std::endl << "[" << std::endl << toSend << std::endl << "]" << NC << std::endl << std::endl;
-	if (ret == -1)
+
+	int	body_length = static_cast<int>(response.getBody().length());
+	int	limit = virtualHost.getLimitBodySize();
+
+	if (body_length > limit)
 	{
-		close(socket);
-		return (-1);
+		float						tmp = static_cast<float>(body_length) / limit;
+		int							chunk_nb = std::ceil(tmp);
+		std::string					full_body = response.getBody();
+		std::vector<std::string>	vecChunks = Utils::divise_string(full_body, limit);
+
+		Console::error("Require transfer-encoding : " + Utils::to_string(body_length) + " ; " + Utils::to_string(limit));
+		Console::error("Require " + Utils::to_string(chunk_nb));
+		response.setHeader("Transfer-Encoding", "chunked");
+		for (int i = 0; i <= chunk_nb; i++)
+		{
+			std::string toSend;
+
+			if (i == chunk_nb)							// If we send the last chunk
+				response.setBody("0\r\n\r\n");
+			else										// Else we send content
+				response.setBody(Utils::dec_to_hex(vecChunks[i].length()) + "\r\n" + vecChunks[i] + "\r\n");
+
+			if (i == 0)									// If we send the first chunk we also send headers
+				toSend = response.build(virtualHost.getErrors());
+			else										// Else we send only content
+				toSend = response.getBody();
+
+			int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
+			std::cout << std::endl << GREEN << "------ Sent response ------" << std::endl << "[" << std::endl << toSend << std::endl << "]" << NC << std::endl << std::endl;
+			if (ret == -1)
+			{
+				close(socket);
+				return (-1);
+			}
+		}
+		return (0);
 	}
 	else
-		return (0);
+	{
+		std::string toSend = response.build(virtualHost.getErrors());
+
+		int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
+		std::cout << std::endl << GREEN << "------ Sent response ------" << std::endl << "[" << std::endl << toSend << std::endl << "]" << NC << std::endl << std::endl;
+		if (ret == -1)
+		{
+			close(socket);
+			return (-1);
+		}
+		else
+			return (0);
+	}
 }
 
 long				Server::recv(long socket)
@@ -351,7 +395,6 @@ void				Server::handlePOSTRequest(Response & response, Request const & request, 
 
 		while (std::getline(origStream, curLine))
 		{
-			Console::error(Utils::to_string(inHeader));
 			if (curLine == "\r")
 				inHeader = false;
 			else
@@ -361,7 +404,6 @@ void				Server::handlePOSTRequest(Response & response, Request const & request, 
 				else if (!inHeader)
 					body += curLine + "\r\n";
 			}
-			Console::info("  => '" + curLine + "' ");
 			response.setBody(body);
 		}
 	}
@@ -421,13 +463,11 @@ void				Server::handleGETRequest(Response & response, Request const & request, R
 					body += curLine + "\r\n";
 			}
 		}
-		Console::error("CGI SENT " + body);
 	}
 	else
 	{
 		if (Utils::pathExists(targetPath) && Utils::isRegularFile(targetPath) && Utils::canOpenFile(targetPath))
 		{
-			Console::error("CSS JS " + Utils::get_file_extension(targetPath) + " => " +_extensionMIMEType[Utils::get_file_extension(targetPath)]);
 			body = Utils::getFileContent(targetPath);
 			response.setHeader("Content-Type", _extensionMIMEType[Utils::get_file_extension(targetPath)]);
 		}

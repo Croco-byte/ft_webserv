@@ -24,7 +24,7 @@ class	ServerConfiguration
 		std::map<int, std::string> const &		getErrors(void)													const;
 		std::string const &						getHost()														const;
 		int										getPort()														const;
-		int										getLimit()														const;
+		int										getLimitBodySize()														const;
 		std::string const &						getServerRoot(void)												const;
 		std::vector<Route> const &				getRoutes()														const;
 		bool									isDefault(void)													const;

@@ -24,6 +24,7 @@
 # include <sys/time.h>
 # include <sys/stat.h>
 # include <signal.h>
+# include <cmath>
 # include "Console.hpp"
 
 # define RED								"\033[0;31m"
@@ -78,6 +79,8 @@ namespace Utils
 	std::string					replace(std::string src, std::string search, std::string replace);
 	bool						receivedLastChunk(std::string const & request);
 	size_t						extractContentLength(std::string const & request);
+	std::vector<std::string>	divise_string(std::string str, unsigned int nb);
+	std::string					dec_to_hex(int nb);
 
 
 

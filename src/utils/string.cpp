@@ -336,4 +336,32 @@ namespace Utils
 		size_t result = std::atoi(request.substr(i, count).c_str());
 		return (result);
 	}
+
+	std::vector<std::string>	divise_string(std::string str, unsigned int chunk_size)
+	{
+		std::vector<std::string>	vecChunks;
+		unsigned int				count = 0;
+		int							j = 0;
+
+		vecChunks.push_back("");
+		for (unsigned int i = 0; i < str.length(); i++)
+		{
+			if (count == chunk_size)
+			{
+				vecChunks.push_back("");
+				count = 0;
+				j++;
+			}
+			vecChunks[j] += str[i];
+			count++;
+		}
+		return (vecChunks);
+	}
+	
+	std::string					dec_to_hex(int nb)
+	{
+		std::stringstream ss;
+		ss<< std::hex << nb;
+		return (ss.str());
+	}
 }

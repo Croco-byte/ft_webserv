@@ -118,7 +118,7 @@ std::string const &						ServerConfiguration::getHost() const
 int										ServerConfiguration::getPort() const
 { return (_port); }
 
-int										ServerConfiguration::getLimit() const
+int										ServerConfiguration::getLimitBodySize() const
 { return (_limit_body_size); }
 
 std::string const &						ServerConfiguration::getServerRoot() const
@@ -156,7 +156,7 @@ std::ostream	& operator<<(std::ostream &stream, ServerConfiguration const & conf
 	stream << "    - listen				: " << conf.getPort() << std::endl;
 	stream << "    - host				: " << conf.getHost() << std::endl;
 	stream << "    - server_name			: " << conf.getName() << std::endl;
-	stream << "    - limit_body_size			: " << conf.getLimit() << std::endl;
+	stream << "    - limit_body_size			: " << conf.getLimitBodySize() << std::endl;
 	stream << "    - server_root			: " << conf.getServerRoot() << std::endl;
 
 	for (std::vector<Route>::const_iterator it = (conf.getRoutes()).begin(); it != (conf.getRoutes()).end(); it++)
