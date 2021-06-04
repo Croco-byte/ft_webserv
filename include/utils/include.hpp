@@ -77,7 +77,7 @@ namespace Utils
 	std::string					reverse(std::string &str);
 	void						*memcpy(void *dst, void *src, size_t len);
 	std::string					replace(std::string src, std::string search, std::string replace);
-	bool						receivedLastChunk(std::string const & request);
+	bool						receivedLastChunk(std::string & request);
 	size_t						extractContentLength(std::string const & request);
 	std::vector<std::string>	divise_string(std::string str, unsigned int nb);
 	std::string					dec_to_hex(int nb);

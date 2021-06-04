@@ -312,12 +312,14 @@ namespace Utils
 		return (src);
 	}
 
-	bool						receivedLastChunk(std::string const & request)
+	bool						receivedLastChunk(std::string & request)
 	{
-		std::string temp = request.substr(request.size() - 5);
-		printf("[DEBUG] %u-%u-%u-%u-%u\n", temp[0], temp[1], temp[2], temp[3], temp[4]);
-		if (temp.find("0\r\n\r\n") != std::string::npos)
+		size_t lastChunk = request.find("0\r\n\r\n");
+		if (lastChunk != std::string::npos)
+		{
+			request = request.substr(0, lastChunk + 5);							// We drop everything that is following the last chunk in the request
 			return (true);
+		}
 		return (false);
 	}
 

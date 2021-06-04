@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/02 17:16:09 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/03 16:11:47 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,12 +174,13 @@ long				Server::send(long socket)
 
 long				Server::recv(long socket)
 {
-	char buffer[2048] = {0};
+	char buffer[22] = {0};
 	long ret;
 
-	ret = ::recv(socket, buffer, 2047, 0);
+	ret = ::recv(socket, buffer, 21, 0);
 	if (ret == 0 || ret == -1)
 	{
+		_requests.erase(socket);
 		close(socket);
 		if (!ret)
 			Console::info("Connection on socket " + Utils::to_string(socket) + " was closed by client on server [" + _virtualHosts[0].getHost() + ":" + Utils::to_string(_virtualHosts[0].getPort()) + "]");
@@ -231,6 +232,8 @@ long				Server::accept(void)
 	return (socket);
 }
 
+void				Server::resetSocket(long socket)
+{ _requests.erase(socket); }
 
 /*
 ** ------ GETTERS / SETTERS ------
