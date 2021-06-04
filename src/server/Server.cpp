@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/04 12:00:30 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/04 14:49:07 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -161,7 +161,10 @@ long				Server::recv(long socket)
 		{
 			size_t len = Utils::extractContentLength(_requests[socket]);
 			if (_requests[socket].size() >= i + 4 + len)
+			{
+				_requests[socket] = _requests[socket].substr(0, i + 4 + len);			// Dropping any superfluous data after we reached Content-Length
 				ret = 0;
+			}
 			else
 				ret = 1;
 		}
