@@ -100,7 +100,7 @@ long				Server::send(long socket)
 	Response				response;
 
 	std::string request_str = _requests[socket];
-	Console::error(Utils::to_string(socket));
+	//Console::error(Utils::to_string(socket));
 	_requests.erase(socket);
 	request.load(request_str);
 
@@ -132,6 +132,7 @@ long				Server::send(long socket)
 		Console::error("Require transfer-encoding : " + Utils::to_string(body_length) + " ; " + Utils::to_string(limit));
 		Console::error("Require " + Utils::to_string(chunk_nb));
 		response.setHeader("Transfer-Encoding", "chunked");
+
 		for (int i = 0; i <= chunk_nb; i++)
 		{
 			std::string toSend;

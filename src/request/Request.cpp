@@ -148,6 +148,12 @@ void						Request::parseLang(void)
 
 void						Request::parseRequestBody(std::string const & request)
 {
+	if (_headers.find("Transfer-Encoding") != _headers.end()
+		&& _headers["Transfer-Encoding"] == "chunked")
+	{
+		this->parseRequestChunkedBody(request);
+		return ;
+	}
 	size_t i = request.find("\r\n\r\n");
 	if (i != std::string::npos)
 	{
@@ -164,4 +170,27 @@ void						Request::parseRequestBody(std::string const & request)
 			}
 		}
 	}
+}
+
+void				Request::parseRequestChunkedBody(std::string const & request)
+{
+	std::string result;
+
+	size_t i = request.find("\r\n\r\n") + 4;
+	while (i < request.length())
+	{
+		std::string	tmp = request.substr(i);
+		size_t		end_line_pos = tmp.find("\r\n");
+		int			nb = Utils::hex_to_dec(tmp.substr(0, end_line_pos));
+
+		if (nb == 0)
+			break ;
+			
+		size_t		start_data_pos = end_line_pos + 2;
+		result += tmp.substr(start_data_pos, nb);
+		Console::info("Read " + Utils::to_string(nb) + " bytes :");
+		Console::info("DATA => [" + result + "]");
+		i += start_data_pos + nb + 1;
+	}
+	_body = result;
 }
