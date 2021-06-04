@@ -130,10 +130,10 @@ long				Server::send(long socket)
 
 long				Server::recv(long socket)
 {
-	char buffer[1024] = {0};
+	char buffer[2048] = {0};
 	long ret;
 
-	ret = ::recv(socket, buffer, 1023, 0);
+	ret = ::recv(socket, buffer, 2047, 0);
 	if (ret == 0 || ret == -1)
 	{
 		_requests.erase(socket);
@@ -152,6 +152,7 @@ long				Server::recv(long socket)
 	{
 		if (_requests[socket].find("Transfer-Encoding: chunked") != std::string::npos)	// If there is a Transfer-Encoding: chunked, it has the priority. If we received the end of the chunked message, we finished receiving the request.
 		{
+			Console::error("Chunked");
 			if (Utils::receivedLastChunk(_requests[socket]))
 				ret = 0;
 			else
@@ -159,6 +160,7 @@ long				Server::recv(long socket)
 		}
 		else if (_requests[socket].find("Content-Length: ") != std::string::npos)		// If there is no Transfer-Encoding: chunked, let's check if there is a Content-Length.
 		{
+			Console::error("Normal");
 			size_t len = Utils::extractContentLength(_requests[socket]);
 			if (_requests[socket].size() >= i + 4 + len)
 			{
@@ -176,8 +178,8 @@ long				Server::recv(long socket)
 
 	if (ret == 0)
 		std::cout << std::endl << CYAN << "------ Received request ------" << std::endl << "[" << std::endl << _requests[socket] << "]" << NC << std::endl << std::endl;
-	else if (ret == 1)
-		std::cout << "[DEBUG] We did not receive the whole request. Looping..." << std::endl;
+	// else if (ret == 1)
+	// 	std::cout << "[DEBUG] We did not receive the whole request. Looping..." << std::endl;
 	return (ret);
 }
 
@@ -278,6 +280,7 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 
 void				Server::handlePUTRequest(Request const & request, Response & response, std::string const & targetPath, ServerConfiguration & virtualHost)
 {
+	Console::error(targetPath);
 	std::ofstream file;
 	if (Utils::isRegularFile(targetPath))
 	{
