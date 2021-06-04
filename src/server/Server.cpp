@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/04 16:40:59 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/04 16:48:38 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -273,6 +273,7 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 		this->handlePOSTRequest(response, request, route, virtualHost);
 	else if (request.getMethod() == "GET")
 		this->handleGETRequest(response, request, route, virtualHost);
+		
 }
 
 void				Server::handlePUTRequest(Request const & request, Response & response, std::string const & targetPath, ServerConfiguration & virtualHost)
@@ -382,6 +383,7 @@ void				Server::handleGETRequest(Response & response, Request const & request, R
 	std::string		targetPath = getLocalPath(request, route);
 	std::string		lastModified = Utils::getLastModified(targetPath);
 
+	Console::error("Target path => " + targetPath);
 	response.setHeader("Last-Modified", lastModified);
 	if (Utils::isDirectory(targetPath))
 	{
@@ -668,6 +670,7 @@ bool		Server::requestIsValid(Response & response, Request request, Route & route
 {
 	std::string		targetPath = getLocalPath(request, route);
 	std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
+	
 	if (request.getValidity() != 0)
 	{
 		response.setStatus(request.getValidity());
@@ -758,7 +761,7 @@ bool		Server::check403(Request request, Route route)
 		else if (route.autoIndex())
 			return (false);
 		else
-			return (false);
+			return (false); //return (true); NGINX != ubuntu_tester
 	}
 	else if (Utils::pathExists(targetPath) && Utils::isRegularFile(targetPath) && !Utils::canOpenFile(targetPath))
 		return (true);
