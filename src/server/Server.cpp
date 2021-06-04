@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/03 16:11:47 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/04 11:57:39 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,61 +123,17 @@ long				Server::send(long socket)
 	int	limit = virtualHost.getLimitBodySize();
 
 	if (body_length > limit)
-	{
-		float						tmp = static_cast<float>(body_length) / limit;
-		int							chunk_nb = std::ceil(tmp);
-		std::string					full_body = response.getBody();
-		std::vector<std::string>	vecChunks = Utils::divise_string(full_body, limit);
-
-		Console::error("Require transfer-encoding : " + Utils::to_string(body_length) + " ; " + Utils::to_string(limit));
-		Console::error("Require " + Utils::to_string(chunk_nb));
-		response.setHeader("Transfer-Encoding", "chunked");
-		for (int i = 0; i <= chunk_nb; i++)
-		{
-			std::string toSend;
-
-			if (i == chunk_nb)							// If we send the last chunk
-				response.setBody("0\r\n\r\n");
-			else										// Else we send content
-				response.setBody(Utils::dec_to_hex(vecChunks[i].length()) + "\r\n" + vecChunks[i] + "\r\n");
-
-			if (i == 0)									// If we send the first chunk we also send headers
-				toSend = response.build(virtualHost.getErrors());
-			else										// Else we send only content
-				toSend = response.getBody();
-
-			int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
-			std::cout << std::endl << GREEN << "------ Sent response ------" << std::endl << "[" << std::endl << toSend << std::endl << "]" << NC << std::endl << std::endl;
-			if (ret == -1)
-			{
-				close(socket);
-				return (-1);
-			}
-		}
-		return (0);
-	}
+		return (this->sendChunkedResponse(response, body_length, limit, virtualHost, socket));
 	else
-	{
-		std::string toSend = response.build(virtualHost.getErrors());
-
-		int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
-		std::cout << std::endl << GREEN << "------ Sent response ------" << std::endl << "[" << std::endl << toSend << std::endl << "]" << NC << std::endl << std::endl;
-		if (ret == -1)
-		{
-			close(socket);
-			return (-1);
-		}
-		else
-			return (0);
-	}
+		return (this->sendResponse(response, virtualHost, socket));
 }
 
 long				Server::recv(long socket)
 {
-	char buffer[22] = {0};
+	char buffer[1024] = {0};
 	long ret;
 
-	ret = ::recv(socket, buffer, 21, 0);
+	ret = ::recv(socket, buffer, 1023, 0);
 	if (ret == 0 || ret == -1)
 	{
 		_requests.erase(socket);
@@ -478,6 +434,60 @@ void				Server::handleGETRequest(Response & response, Request const & request, R
 	response.setBody(body);
 }
 
+
+/*
+** ------ PRIVATE HELPERS : SENDERS ------
+*/
+int				Server::sendChunkedResponse(Response & response, int body_length, int limit, ServerConfiguration & virtualHost, long socket)
+{
+	float						tmp = static_cast<float>(body_length) / limit;
+	int							chunk_nb = std::ceil(tmp);
+	std::string					full_body = response.getBody();
+	std::vector<std::string>	vecChunks = Utils::divise_string(full_body, limit);
+
+	Console::error("Require transfer-encoding : " + Utils::to_string(body_length) + " ; " + Utils::to_string(limit));
+	Console::error("Require " + Utils::to_string(chunk_nb));
+	response.setHeader("Transfer-Encoding", "chunked");
+	response.setHeader("Content-Length", "");
+	for (int i = 0; i <= chunk_nb; i++)
+	{
+		std::string toSend;
+
+		if (i == chunk_nb)							// If we send the last chunk
+			response.setBody("0\r\n\r\n");
+		else										// Else we send content
+			response.setBody(Utils::dec_to_hex(vecChunks[i].length()) + "\r\n" + vecChunks[i] + "\r\n");
+
+		if (i == 0)									// If we send the first chunk we also send headers
+			toSend = response.build(virtualHost.getErrors());
+		else										// Else we send only content
+			toSend = response.getBody();
+
+		int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
+		std::cout << std::endl << GREEN << "------ Sent response ------" << std::endl << "[" << std::endl << toSend << std::endl << "]" << NC << std::endl << std::endl;
+		if (ret == -1)
+		{
+			close(socket);
+			return (-1);
+		}
+	}
+	return (0);
+}
+
+int					Server::sendResponse(Response & response, ServerConfiguration & virtualHost, long socket)
+{
+	std::string toSend = response.build(virtualHost.getErrors());
+
+	int ret = ::send(socket, toSend.c_str(), toSend.size(), 0);
+	std::cout << std::endl << GREEN << "------ Sent response ------" << std::endl << "[" << std::endl << toSend << std::endl << "]" << NC << std::endl << std::endl;
+	if (ret == -1)
+	{
+		close(socket);
+		return (-1);
+	}
+	else
+		return (0);
+}
 
 /*
 ** ------ PRIVATE HELPERS : HEADER HANDLERS ------

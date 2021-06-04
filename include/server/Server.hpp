@@ -56,7 +56,10 @@ class Server
 		void							handleDELETERequest(Response & response, std::string const & targetPath, ServerConfiguration & virtualHost);
 		void							handlePOSTRequest(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost);
 		void							handleGETRequest(Response & response, Request const & request, Route & route, ServerConfiguration & virtualHost);
-
+	
+		/* PRIVATE HELPERS : RESPONSE SENDERS */
+		int								sendChunkedResponse(Response & response, int body_length, int limit, ServerConfiguration & virtualHost, long socket);
+		int								sendResponse(Response & response, ServerConfiguration & virtualHost, long socket);
 
 		/* PRIVATE HELPERS : REQUEST HEADER HANDLERS */
 		void							handleRequestHeaders(Request request, Response &reponse);
