@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/04 16:48:38 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/04 17:27:39 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,8 +178,8 @@ long				Server::recv(long socket)
 
 	if (ret == 0)
 		std::cout << std::endl << CYAN << "------ Received request ------" << std::endl << "[" << std::endl << _requests[socket] << "]" << NC << std::endl << std::endl;
-	// else if (ret == 1)
-	// 	std::cout << "[DEBUG] We did not receive the whole request. Looping..." << std::endl;
+	 else if (ret == 1)
+	 	std::cout << "[DEBUG] Received " << _requests[socket].size() << " bytes" << std::endl;
 	return (ret);
 }
 
