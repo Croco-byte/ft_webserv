@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/04 17:27:39 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/05 18:12:35 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,7 +100,6 @@ long				Server::send(long socket)
 	Response				response;
 
 	std::string request_str = _requests[socket];
-	//Console::error(Utils::to_string(socket));
 	_requests.erase(socket);
 	request.load(request_str);
 
@@ -130,10 +129,10 @@ long				Server::send(long socket)
 
 long				Server::recv(long socket)
 {
-	char buffer[2048] = {0};
+	char buffer[RECV_SIZE] = {0};
 	long ret;
 
-	ret = ::recv(socket, buffer, 2047, 0);
+	ret = ::recv(socket, buffer, RECV_SIZE - 1, 0);
 	if (ret == 0 || ret == -1)
 	{
 		_requests.erase(socket);
@@ -152,7 +151,6 @@ long				Server::recv(long socket)
 	{
 		if (_requests[socket].find("Transfer-Encoding: chunked") != std::string::npos)	// If there is a Transfer-Encoding: chunked, it has the priority. If we received the end of the chunked message, we finished receiving the request.
 		{
-			Console::error("Chunked");
 			if (Utils::receivedLastChunk(_requests[socket]))
 				ret = 0;
 			else
@@ -160,7 +158,6 @@ long				Server::recv(long socket)
 		}
 		else if (_requests[socket].find("Content-Length: ") != std::string::npos)		// If there is no Transfer-Encoding: chunked, let's check if there is a Content-Length.
 		{
-			Console::error("Normal");
 			size_t len = Utils::extractContentLength(_requests[socket]);
 			if (_requests[socket].size() >= i + 4 + len)
 			{
@@ -176,10 +173,12 @@ long				Server::recv(long socket)
 	else
 		ret = 1;
 
-	if (ret == 0)
+	if (ret == 0 && _requests[socket].size() < 2000)
 		std::cout << std::endl << CYAN << "------ Received request ------" << std::endl << "[" << std::endl << _requests[socket] << "]" << NC << std::endl << std::endl;
-	 else if (ret == 1)
-	 	std::cout << "[DEBUG] Received " << _requests[socket].size() << " bytes" << std::endl;
+	else if (ret == 0 && _requests[socket].size() >= 2000)
+		std::cout << std::endl << CYAN << "------ Received request ------" << std::endl << "[" << std::endl << _requests[socket].substr(0, 500) << "...]" << NC << std::endl << std::endl;
+//	 else if (ret == 1)
+//	 	std::cout << "[DEBUG] Received " << _requests[socket].size() << " bytes" << std::endl;
 	return (ret);
 }
 
@@ -592,7 +591,9 @@ std::string		Server::execCGI(Request request, Route & route, ServerConfiguration
 			this->generateMetaVariables(cgi, request, route, virtualHost);
 			cgi.convertHeadersToMetaVariables(request);
 			cgi.setBinary(route.getCGIBinary());
+			std::cout << "[DEBUG] READY TO EXECUTE THE CGI !" << std::endl;
 			cgi.execute(targetPath);
+			std::cout << "[DEBUG] EXECUTED THE CGI SUCCESSFULLY. GETTING OUTPUT..." << std::endl;
 			return (cgi.getOutput());
 		}
 	}
@@ -620,12 +621,13 @@ void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route, Se
 	cgi.addMetaVariable("SERVER_PROTOCOL", "HTTP/1.1");
 	cgi.addMetaVariable("SERVER_PORT", Utils::to_string(virtualHost.getPort()));
 	cgi.addMetaVariable("REQUEST_METHOD", request.getMethod());
-	cgi.addMetaVariable("PATH_INFO", "");												// A COMPLETER
+	cgi.addMetaVariable("REQUEST_URI", request.getURL());
+	cgi.addMetaVariable("PATH_INFO", request.getURL());
 	cgi.addMetaVariable("PATH_TRANSLATED", targetPath);
 	cgi.addMetaVariable("SCRIPT_NAME", route.getCGIBinary());
-	cgi.addMetaVariable("DOCUMENT_ROOT", route.getLocalURL());									// A Vérifier
+	cgi.addMetaVariable("DOCUMENT_ROOT", route.getLocalURL());
 	cgi.addMetaVariable("QUERY_STRING", request.getQueryString());
-	cgi.addMetaVariable("REMOTE_ADDR", "127.0.0.1");											// A COMPLETER
+	cgi.addMetaVariable("REMOTE_ADDR", virtualHost.getHost());
 	cgi.addMetaVariable("AUTH_TYPE", (route.requireAuth() ? "BASIC" : ""));
 	cgi.addMetaVariable("REMOTE_USER", "user");
 	cgi.addMetaVariable("CONTENT_TYPE", "text/html");
@@ -635,12 +637,39 @@ void		Server::generateMetaVariables(CGI &cgi, Request &request, Route &route, Se
 		cgi.addMetaVariable("CONTENT_TYPE", it->second);
 	}
 	cgi.addMetaVariable("CONTENT_LENGTH", Utils::to_string(request.getBody().length()));
-	if (request.getMethod() == "get" || request.getMethod() == "GET")
-		cgi.addMetaVariable("CONTENT_LENGTH", "0");
 	cgi.addMetaVariable("REDIRECT_STATUS", "200");
 	cgi.addMetaVariable("HTTP_ACCEPT", request.getHeaders()["HTTP_ACCEPT"]);
 	cgi.addMetaVariable("HTTP_USER_AGENT", request.getHeaders()["User-Agent"]);
 	cgi.addMetaVariable("HTTP_REFERER", request.getHeaders()["Referer"]);
+
+
+/*	cgi.addMetaVariable("GATEWAY_INTERFACE", "CGI/1.1");
+	cgi.addMetaVariable("SERVER_NAME", virtualHost.getName());
+	cgi.addMetaVariable("SERVER_SOFTWARE", "webserv/1.0");
+	cgi.addMetaVariable("SERVER_PROTOCOL", "HTTP/1.1");
+	cgi.addMetaVariable("SERVER_PORT", Utils::to_string(virtualHost.getPort()));
+	cgi.addMetaVariable("REQUEST_METHOD", request.getMethod());
+	cgi.addMetaVariable("REQUEST_URI", request.getURL());
+	cgi.addMetaVariable("PATH_INFO", request.getURL());
+	cgi.addMetaVariable("PATH_TRANSLATED", request.getURL());
+	cgi.addMetaVariable("SCRIPT_NAME", route.getCGIBinary());
+	cgi.addMetaVariable("SCRIPT_FILENAME", route.getCGIBinary());
+	cgi.addMetaVariable("DOCUMENT_ROOT", route.getLocalURL());
+	cgi.addMetaVariable("QUERY_STRING", request.getQueryString());
+	cgi.addMetaVariable("REMOTE_ADDR", virtualHost.getHost());
+	cgi.addMetaVariable("AUTH_TYPE", (route.requireAuth() ? "BASIC" : ""));
+	cgi.addMetaVariable("REMOTE_USER", "user");
+	cgi.addMetaVariable("CONTENT_TYPE", "text/html");
+	if (headers.find("Content-Type") != headers.end())
+	{
+		DoubleString::iterator it = headers.find("Content-Type");
+		cgi.addMetaVariable("CONTENT_TYPE", it->second);
+	}
+	cgi.addMetaVariable("CONTENT_LENGTH", Utils::to_string(request.getBody().length()));
+	cgi.addMetaVariable("REDIRECT_STATUS", "200");
+	cgi.addMetaVariable("HTTP_ACCEPT", request.getHeaders()["HTTP_ACCEPT"]);
+	cgi.addMetaVariable("HTTP_USER_AGENT", request.getHeaders()["User-Agent"]);
+	cgi.addMetaVariable("HTTP_REFERER", request.getHeaders()["Referer"]); */
 }
 
 

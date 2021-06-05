@@ -142,6 +142,12 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 			> Referrer							OK
 			> Retry-After						OK
 			> Server							OK
-			> Transfer-Encoding
+			> Transfer-Encoding					OK
 			> User-Agent						OK
 			> WWW-Authenticate					OK
+
+
+> TESTER :
+	- Voir la gestion de la variable PATH_INFO, pour le moment j'utilise le path simple de la requête.
+	- Renvoyer une erreur 500 quand on arrive pas à ouvrir le binary du CGI, pour l'instant ça ne renvoie rien du tout, et ça produit des leaks.
+	- S'occuper de la destination des fichiers uploadés. Pour le moment, quand on PUT /put_test, ça upload dans put_test, or cela devrait upload dans un dossier du choix de l'utilisateur.

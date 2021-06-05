@@ -41,7 +41,12 @@
 # define ON									true
 # define OFF								false
 
+# define STDIN								0
+# define STDOUT								1
+
 # define UNUSED(X)							(void)(X)
+
+# define RECV_SIZE							65536
 
 typedef int									t_socket;
 typedef struct sockaddr_in					t_sockaddr_in;

@@ -13,6 +13,7 @@ class CGI
 
 		void		setBinary(std::string path);
 		void		setInput(std::string content);
+		int			minipipe(void);
 		void		execute(std::string target);
 		void		addMetaVariable(std::string name, std::string value);
 		void		convertHeadersToMetaVariables(Request request);
@@ -28,6 +29,11 @@ class CGI
 		std::string		_binary;
 		std::string		_output;
 		std::string		_input;
+
+		int				_stdin;
+		int				_stdout;
+		int				_pipin;
+		int				_pipout;
 };
 
 #endif
