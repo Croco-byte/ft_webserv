@@ -1,0 +1,92 @@
+test: abcdef
+Content-type: text/html; charset=UTF-8
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>array(38) {
+  ["AUTH_TYPE"]=>
+  string(0) ""
+  ["CONTENT_LENGTH"]=>
+  string(2) "19"
+  ["CONTENT_TYPE"]=>
+  string(48) "application/x-www-form-urlencoded; charset=UTF-8"
+  ["DOCUMENT_ROOT"]=>
+  string(8) "/www/cgi"
+  ["GATEWAY_INTERFACE"]=>
+  string(7) "CGI/1.1"
+  ["HTTP_ACCEPT"]=>
+  string(3) "*/*"
+  ["HTTP_ACCEPT_ENCODING"]=>
+  string(17) "gzip, deflate, br"
+  ["HTTP_ACCEPT_LANGUAGE"]=>
+  string(35) "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7"
+  ["HTTP_CONNECTION"]=>
+  string(10) "keep-alive"
+  ["HTTP_CONTENT_LENGTH"]=>
+  string(2) "19"
+  ["HTTP_CONTENT_TYPE"]=>
+  string(48) "application/x-www-form-urlencoded; charset=UTF-8"
+  ["HTTP_HOST"]=>
+  string(14) "localhost:8002"
+  ["HTTP_ORIGIN"]=>
+  string(21) "http://localhost:8002"
+  ["HTTP_REFERER"]=>
+  string(35) "http://localhost:8002/cgi/index.php"
+  ["HTTP_SEC_CH_UA"]=>
+  string(64) "" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91""
+  ["HTTP_SEC_CH_UA_MOBILE"]=>
+  string(2) "?0"
+  ["HTTP_SEC_FETCH_DEST"]=>
+  string(5) "empty"
+  ["HTTP_SEC_FETCH_MODE"]=>
+  string(4) "cors"
+  ["HTTP_SEC_FETCH_SITE"]=>
+  string(11) "same-origin"
+  ["HTTP_USER_AGENT"]=>
+  string(104) "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
+  ["HTTP_X_REQUESTED_WITH"]=>
+  string(14) "XMLHttpRequest"
+  ["PATH_INFO"]=>
+  string(14) "/cgi/index.php"
+  ["PATH_TRANSLATED"]=>
+  string(18) "/www/cgi/index.php"
+  ["QUERY_STRING"]=>
+  string(0) ""
+  ["REDIRECT_STATUS"]=>
+  string(3) "200"
+  ["REMOTE_ADDR"]=>
+  string(9) "127.0.0.1"
+  ["REMOTE_USER"]=>
+  string(4) "user"
+  ["REQUEST_METHOD"]=>
+  string(4) "POST"
+  ["REQUEST_URI"]=>
+  string(14) "/cgi/index.php"
+  ["SCRIPT_NAME"]=>
+  string(16) "/usr/bin/php-cgi"
+  ["SERVER_NAME"]=>
+  string(14) "default_server"
+  ["SERVER_PORT"]=>
+  string(4) "8002"
+  ["SERVER_PROTOCOL"]=>
+  string(8) "HTTP/1.1"
+  ["SERVER_SOFTWARE"]=>
+  string(11) "webserv/1.0"
+  ["SCRIPT_FILENAME"]=>
+  string(18) "/www/cgi/index.php"
+  ["PHP_SELF"]=>
+  string(30) "/usr/bin/php-cgi/cgi/index.php"
+  ["REQUEST_TIME_FLOAT"]=>
+  float(1623050856.7738)
+  ["REQUEST_TIME"]=>
+  int(1623050856)
+}
+POST : array(2) {
+  ["id"]=>
+  string(5) " user"
+  ["pass"]=>
+  string(5) " tesr"
+}
+GET : array(0) {
+}
+QUERY_STRING => 
+CONTENT_LENGTH => 19
+CONTENT_TYPE => application/x-www-form-urlencoded; charset=UTF-8
