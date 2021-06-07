@@ -36,6 +36,7 @@ class	Route
 		void										setUploadDir(std::string const & dir);
 		void										setUserFile(std::string const & file);
 		void										setRouteLang(std::vector<std::string> const & lang);
+		void										setMaxBodySize(unsigned int maxSize);
 
 		std::vector<std::string> const &			getAcceptedMethods(void) const;
 		std::vector<std::string> const &			getCGIExtensions(void) const;
@@ -49,6 +50,7 @@ class	Route
 		std::string const &							getUserFile(void) const;
 		std::vector<std::string> const &			getRouteLang(void) const;
 		std::string									getFormattedLang(void) const;
+		unsigned int								getMaxBodySize(void) const;
 
 		bool										acceptMethod(std::string method);
 
@@ -63,6 +65,7 @@ class	Route
 		std::string					_cgi_bin;
 		std::string					_upload_dir;
 		std::string					_auth_basic_user_file;
+		unsigned int				_max_body_size;
 		std::vector<std::string>	_routeLang;
 };
 

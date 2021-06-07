@@ -29,33 +29,34 @@ void		 CGI::execute(std::string target)
 {
 	pid_t					pid;
 	int						ex_fd[2];
-	int						output_fd;
-	int						input_fd;
-	char					tmp[1024];
-	int						ret;
-	std::string				output;
+	char					tmp[CGI_SIZE];
+	int						ret(1);
 
 	ex_fd[0] = dup(STDIN_FILENO);
 	ex_fd[1] = dup(STDOUT_FILENO);
+
+	FILE	*input_tmpfile = tmpfile();
+	FILE	*output_tmpfile = tmpfile();
+	int		input_fd = fileno(input_tmpfile);
+	int		output_fd = fileno(output_tmpfile);
+
+	write(input_fd, _input.c_str(), _input.length());
+	lseek(input_fd, 0, SEEK_SET);
+
 	pid = fork();
 	if (pid == -1)
 	{
 		Console::error("Fork failed for CGI : PID = -1");
 		return ;
 	}
-	else if (pid == 0)		 // On est dans le fils
+	else if (pid == 0)
 	{
 		char **av = new char * [3];
 		av[0] = new char [_binary.length() + 1];
 		av[1] = new char [target.length() + 1];
 
-		input_fd = open("tmp/.cgi_input", O_RDWR, 0777);
-		output_fd = open("tmp/.cgi_output", O_RDWR | O_TRUNC, 0777);
-
 		dup2(output_fd, STDOUT_FILENO);
-		close(output_fd);
 		dup2(input_fd, STDIN_FILENO);
-		close(input_fd);
 
 		strcpy(av[0], _binary.c_str());
 		strcpy(av[1], target.c_str());
@@ -64,21 +65,15 @@ void		 CGI::execute(std::string target)
 	}
 	else
 	{
-		int				  status;
+		waitpid(-1, NULL, 0);
+		lseek(output_fd, 0, SEEK_SET);
 
-		input_fd = open("tmp/.cgi_input", O_RDWR | O_TRUNC, 0777);
-		output_fd = open("tmp/.cgi_output", O_RDWR, 0777);
-
-		write(input_fd, _input.c_str(), _input.length());
-
-		waitpid(pid, &status, 0);
-
-		while ((ret = read(output_fd, tmp, 1023)) != 0)
+		while (ret > 0)
 		{
-			tmp[ret] = '\0';
-			output += std::string(tmp);
+			memset(tmp, 0, CGI_SIZE);
+			ret = read(output_fd, tmp, CGI_SIZE - 1);
+			_output += tmp;
 		}
-		_output = output;
 
 		close(output_fd);
 		close(input_fd);
@@ -113,9 +108,7 @@ char		 **CGI::doubleStringToChar(DoubleString param)
 }
 
 std::string				  CGI::getOutput()
-{
-	return (_output);
-}
+{ return (_output); }
 
 void						   CGI::convertHeadersToMetaVariables(Request request)
 {

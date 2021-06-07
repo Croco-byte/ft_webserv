@@ -49,7 +49,7 @@ bool						Webserv::isRouteBlockStart(std::string const & line) const
 bool						Webserv::isValidServDirective(std::string const & directive) const
 {
 	if (directive == "listen" || directive == "host" || directive == "server_name"
-		|| directive == "root" || directive == "error" || directive == "client_max_body_size")
+		|| directive == "root" || directive == "error")
 		return (true);
 	return (false);
 }
@@ -59,7 +59,7 @@ bool						Webserv::isValidRouteDirective(std::string const & directive) const
 	if (directive == "root" || directive == "index" || directive == "autoindex"
 		|| directive == "upload_dir" || directive == "cgi_extension" || directive == "cgi_bin"
 		|| directive == "methods" || directive == "auth_basic" || directive == "auth_basic_user_file"
-		|| directive == "language")
+		|| directive == "language" || directive == "client_max_body_size")
 		return (true);
 	return (false);
 }
@@ -190,8 +190,6 @@ bool						Webserv::handleServerConfLine(std::string const & line, ServerConfigur
 			else
 				return (false);
 		}
-		else if (instruction == "client_max_body_size")
-			conf.setLimitBodySize(std::atoi(params[0].c_str()));
 		return (true);
 	}
 	return (false);
@@ -279,6 +277,8 @@ bool						Webserv::handleRouteLine(std::string const & line, Route & route)
 			route.setUserFile(params[0]);
 		else if (instruction == "language")
 			route.setRouteLang(params);
+		else if (instruction == "client_max_body_size")
+			route.setMaxBodySize(std::atoi(params[0].c_str()));
 		return (true);
 	}
 	return (false);

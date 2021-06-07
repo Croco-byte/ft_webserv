@@ -6,14 +6,14 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/27 17:58:43 by user42            #+#    #+#             */
-/*   Updated: 2021/05/31 15:14:00 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/07 16:18:09 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server/Route.hpp"
 
 Route::Route()
- : _require_auth(false)
+ : _require_auth(false), _max_body_size(INT_MAX - 1)
 {
 	// A VERIFIER
 	_accepted_methods.push_back("GET");
@@ -40,6 +40,7 @@ Route::Route(const Route &x)
 	_require_auth = x._require_auth;
 	_auth_basic_user_file = x._auth_basic_user_file;
 	_routeLang = x._routeLang;
+	_max_body_size = x._max_body_size;
 }
 
 Route::~Route()
@@ -99,6 +100,9 @@ void								Route::setUserFile(std::string const & file)
 void								Route::setRouteLang(std::vector<std::string> const & lang)
 { _routeLang = lang; }
 
+void								Route::setMaxBodySize(unsigned int maxSize)
+{ _max_body_size = maxSize; }
+
 std::vector<std::string> const &	Route::getAcceptedMethods(void) const
 { return (_accepted_methods); }
 
@@ -145,6 +149,10 @@ std::string							Route::getFormattedLang(void) const
 	return (result);
 }
 
+unsigned int						Route::getMaxBodySize(void) const
+{ return (_max_body_size); }
+
+
 std::ostream	&operator<<(std::ostream &stream, Route const & route)
 {
 	stream	<< "\033[0;33m" << std::endl
@@ -160,6 +168,7 @@ std::ostream	&operator<<(std::ostream &stream, Route const & route)
 			<< "    - local URL             : " << route.getLocalURL() << std::endl
 			<< "    - CGI Binary            : " << route.getCGIBinary() << std::endl
 			<< "    - language              : " << route.getFormattedLang() << std::endl
+			<< "    - max_body_size         : " << route.getMaxBodySize() << std::endl
 			<< "    - upload dir            : " << route.getUploadDir() << std::endl;
 	return (stream);
 }

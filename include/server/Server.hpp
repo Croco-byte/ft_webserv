@@ -45,6 +45,9 @@ class Server
 		std::map<long, std::string>						_requests;
 		DoubleString									_extensionMIMEType;
 
+		std::map<long, std::string>						_responses;
+		std::map<long, size_t>							_sent;
+
 		void							initMIMEType();
 
 		/* PRIVATE HELPERS : RESPONSE HEADERS HANDLERS */

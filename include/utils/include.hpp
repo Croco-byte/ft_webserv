@@ -1,6 +1,8 @@
 #ifndef INCLUDE_HPP
 # define INCLUDE_HPP
 
+# include <errno.h>		// TO DELETE
+
 # include <unistd.h>
 # include <iostream>
 # include <fstream>
@@ -47,6 +49,8 @@
 # define UNUSED(X)							(void)(X)
 
 # define RECV_SIZE							65536
+# define CGI_SIZE							65536
+# define SOCKET_MAX							1000000
 
 typedef int									t_socket;
 typedef struct sockaddr_in					t_sockaddr_in;

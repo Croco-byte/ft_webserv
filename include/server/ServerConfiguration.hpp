@@ -16,7 +16,6 @@ class	ServerConfiguration
 		void									setHost(std::string const & host);
 		void									addCustomErrorPage(int code, std::string location);
 		void									setPort(int port);
-		void									setLimitBodySize(int limit);
 		void									setServerRoot(std::string const & server_root);
 		void									addRoute(Route route);
 
@@ -24,7 +23,6 @@ class	ServerConfiguration
 		std::map<int, std::string> const &		getErrors(void)													const;
 		std::string const &						getHost()														const;
 		int										getPort()														const;
-		int										getLimitBodySize()														const;
 		std::string const &						getServerRoot(void)												const;
 		std::vector<Route> const &				getRoutes()														const;
 		bool									isDefault(void)													const;
@@ -40,7 +38,6 @@ class	ServerConfiguration
 		std::map<int, std::string>	_error_content;
 		std::string					_default_error_content;
 		int							_port;
-		int							_limit_body_size;
 		std::string					_server_root;
 		std::vector<Route>			_vecRoutes;
 

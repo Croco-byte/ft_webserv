@@ -342,21 +342,9 @@ namespace Utils
 	std::vector<std::string>	divise_string(std::string str, unsigned int chunk_size)
 	{
 		std::vector<std::string>	vecChunks;
-		unsigned int				count = 0;
-		int							j = 0;
 
-		vecChunks.push_back("");
-		for (unsigned int i = 0; i < str.length(); i++)
-		{
-			if (count == chunk_size)
-			{
-				vecChunks.push_back("");
-				count = 0;
-				j++;
-			}
-			vecChunks[j] += str[i];
-			count++;
-		}
+		for (unsigned int i = 0; i < str.length(); i+=chunk_size)
+			vecChunks.push_back(str.substr(i, chunk_size));
 		return (vecChunks);
 	}
 	
