@@ -670,6 +670,8 @@ bool		Server::requestRequireRedirection(Request request, Route & route)
 
 	if (Utils::isDirectory(targetPath) && request.getURL()[request.getURL().length() - 1] != '/')
 	{
+		if (request.getMethod() == "POST" && route.acceptMethod("POST"))
+			return (false);
 		Console::info("Require redirection on " + request.getURL() + "  => " + targetPath);
 		return (true);
 	}
@@ -692,6 +694,7 @@ bool		Server::requestIsValid(Response & response, Request request, Route & route
 	std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
 	unsigned int	limit = route.getMaxBodySize();
 	
+	Console::error(route.getRoute());
 	if (request.getValidity() != 0)
 	{
 		response.setStatus(request.getValidity());

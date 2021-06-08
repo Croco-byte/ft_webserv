@@ -126,7 +126,7 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 
 [DONE]	Ajouter un path par défaut pour la configuration.
 
-[TODO]	Gérer les headers. Liste des headers :
+[DONE]	Gérer les headers. Liste des headers :
 			> Accept-Charset					OK
 			> Accept-Language					OK
 			> Allow								OK
