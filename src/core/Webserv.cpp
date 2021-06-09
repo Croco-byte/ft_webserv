@@ -6,8 +6,9 @@
 */
 bool						Webserv::isServBlockStart(std::string const & line) const
 {
-	int		i(0);
-	while(line[i] && Utils::ft_isspace(line[i]))
+	int		i = 0;
+
+	while(line[i] != '\0' && Utils::ft_isspace(line[i]))
 		i++;
 	if (line.compare(i, 6, "server") != 0)
 		return (false);
@@ -71,21 +72,24 @@ bool						Webserv::isValidRouteDirective(std::string const & directive) const
 void						Webserv::createServers(std::vector<std::string> & lines)
 {
 	int			brace_level(0);
+	size_t		i = 0;
 
-	for (ConfIterator it = lines.begin(); it != lines.end(); it++)
+	for (ConfIterator it = lines.begin(); it != lines.end() && i < lines.size(); it++)
 	{
 		if (isServBlockStart(*it))
 		{
 			ConfIterator block_start = it;
 			it++;
+			i++;
 			brace_level++;
-			while (brace_level && it != lines.end())
+			while (brace_level > 0 && it != lines.end())
 			{
 				if ((*it).find('{') != std::string::npos)
 					brace_level++;
 				if ((*it).find('}') != std::string::npos)
 					brace_level--;
 				it++;
+				i++;
 			}
 			if (brace_level == 0)
 				this->createServer(block_start, it);
@@ -95,6 +99,7 @@ void						Webserv::createServers(std::vector<std::string> & lines)
 				exit(1);
 			}
 		}
+		i++;
 	}
 }
 
