@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/08 17:21:06 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/09 17:45:11 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -714,16 +714,13 @@ bool		Server::requestIsValid(Response & response, Request request, Route & route
 		response.setStatus(404);
 		return (false);
 	}
-	else if (Utils::isDirectory(targetPath) && (!route.autoIndex() && !Utils::pathExists(indexPath)))
+	else if (Utils::isDirectory(targetPath) && !route.autoIndex() && !Utils::pathExists(indexPath))
 	{
 		response.setStatus(404);
 		return (false);
 	}
 	else if (!this->isMethodAccepted(request, route))
 	{
-		std::cout << "[DEBUG] Relevant route is : " << route.getRoute() << std::endl;
-		std::cout << "[DEBUG] Methods accepted by this route are : " <<  Utils::join(route.getAcceptedMethods()) << std::endl;
-		std::cout << "[DEBUG] Method of the current request is " << request.getMethod() << std::endl;
 		response.setStatus(405);
 		return (false);
 	}

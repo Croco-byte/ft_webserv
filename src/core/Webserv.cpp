@@ -58,7 +58,7 @@ bool						Webserv::isValidServDirective(std::string const & directive) const
 bool						Webserv::isValidRouteDirective(std::string const & directive) const
 {
 	if (directive == "root" || directive == "index" || directive == "autoindex"
-		|| directive == "upload_dir" || directive == "cgi_extension" || directive == "cgi_bin"
+		|| directive == "cgi_extension" || directive == "cgi_bin"
 		|| directive == "methods" || directive == "auth_basic" || directive == "auth_basic_user_file"
 		|| directive == "language" || directive == "client_max_body_size")
 		return (true);
@@ -131,9 +131,19 @@ void	Webserv::createServer(ConfIterator start, ConfIterator end)
 	{
 		if ((*it).getDefaultVHConfig().getHost() == conf.getHost() && (*it).getDefaultVHConfig().getPort() == conf.getPort())
 		{
+			if (!conf.hasRootRoute())
+			{
+				Console::error("Configuration parsing failure: all servers and virtual hosts must have a '/' location");
+				exit(1);
+			}
 			(*it).addVirtualHost(conf);
 			return ;
 		}
+	}
+	if (!conf.hasRootRoute())
+	{
+		Console::error("Configuration parsing failure: all servers and virtual hosts must have a '/' location");
+		exit(1);
 	}
 	server.addVirtualHost(conf);
 	_manager.addServer(server);
@@ -268,8 +278,6 @@ bool						Webserv::handleRouteLine(std::string const & line, Route & route)
 			route.setIndex(params[0]);
 		else if (instruction == "autoindex")
 			route.setAutoIndex(Utils::string_to_bool(params[0]));
-		else if (instruction == "upload_dir")
-			route.setUploadDir(params[0]);
 		else if (instruction == "cgi_extension")
 			route.setCGIExtensions(params);
 		else if (instruction == "cgi_bin")

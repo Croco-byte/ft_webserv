@@ -6,14 +6,14 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/27 17:58:43 by user42            #+#    #+#             */
-/*   Updated: 2021/06/07 16:18:09 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/09 17:46:22 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server/Route.hpp"
 
 Route::Route()
- : _require_auth(false), _max_body_size(INT_MAX - 1)
+ : _require_auth(false), _index("index.html"), _max_body_size(INT_MAX - 1)
 {
 	// A VERIFIER
 	_accepted_methods.push_back("GET");
@@ -36,7 +36,6 @@ Route::Route(const Route &x)
 	_local_url = x._local_url;
 	_cgi_bin = x._cgi_bin;
 	_cgi_extensions = x._cgi_extensions;
-	_upload_dir = x._upload_dir;
 	_require_auth = x._require_auth;
 	_auth_basic_user_file = x._auth_basic_user_file;
 	_routeLang = x._routeLang;
@@ -91,9 +90,6 @@ void								Route::setCGIExtensions(std::vector<std::string> const & ext)
 void								Route::addCGIExtension(std::string const & ext)
 { _cgi_extensions.push_back(ext); }
 
-void								Route::setUploadDir(std::string const & dir)
-{ _upload_dir = dir; }
-
 void								Route::setUserFile(std::string const & file)
 { _auth_basic_user_file = file; }
 
@@ -126,9 +122,6 @@ std::string const &					Route::getLocalURL(void) const
 
 std::string const &					Route::getCGIBinary(void) const
 { return (_cgi_bin); }
-
-std::string const &					Route::getUploadDir(void) const
-{ return (_upload_dir); }
 
 std::string const &					Route::getUserFile(void) const
 { return (_auth_basic_user_file); }
@@ -168,8 +161,7 @@ std::ostream	&operator<<(std::ostream &stream, Route const & route)
 			<< "    - local URL             : " << route.getLocalURL() << std::endl
 			<< "    - CGI Binary            : " << route.getCGIBinary() << std::endl
 			<< "    - language              : " << route.getFormattedLang() << std::endl
-			<< "    - max_body_size         : " << route.getMaxBodySize() << std::endl
-			<< "    - upload dir            : " << route.getUploadDir() << std::endl;
+			<< "    - max_body_size         : " << route.getMaxBodySize() << std::endl;
 	return (stream);
 }
 

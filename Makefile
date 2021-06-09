@@ -6,7 +6,7 @@
 #    By: user42 <user42@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/05/27 17:52:43 by user42            #+#    #+#              #
-#    Updated: 2021/06/05 18:16:33 by user42           ###   ########.fr        #
+#    Updated: 2021/06/09 17:00:15 by user42           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -36,12 +36,6 @@ OBJS			= $(SRCS:.cpp=.o)
 
 
 all:			$(NAME)
-				clear
-				./webserv config/default.conf
-
-test:			$(NAME)
-				clear
-				./webserv config/tester.conf
 
 %.o: %.cpp
 				${CC} -c ${CFLAGS} ${INCLUDE} $< -o $@
@@ -54,12 +48,6 @@ clean:
 
 fclean:			clean
 				$(RM) $(NAME)
-
-%:
-		@:
-
-bonus: re
-
 
 re:				fclean all
 

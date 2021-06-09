@@ -26,6 +26,7 @@ class	ServerConfiguration
 		std::string const &						getServerRoot(void)												const;
 		std::vector<Route> const &				getRoutes()														const;
 		bool									isDefault(void)													const;
+		bool									hasRootRoute(void)												const;
 
 		std::string								getErrorExplanation(int code)									const;
 		std::string								getErrorPage(int code)											const;

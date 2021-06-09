@@ -1,5 +1,4 @@
-		>> Modifications apportées au projet
-
+		>> Explications de la boucle principale
 
 1. Gestion des connexions et implémentation de select
 
@@ -122,7 +121,6 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 
 [DONE]	CGI : prefixe HTTP_ pour les headers
 		CGI : Passer les data POST au CGI sur l entree standard
-		Firefox qui n'exécute pas les fichiers PHP mais propose de les télécharger (EDIT : NGINX a le même comportement sur Firefox, le pb ne semble pas venir de nous)
 
 [DONE]	Ajouter un path par défaut pour la configuration.
 
@@ -153,3 +151,4 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 	- Le test avec /directory/youpla.bla ne fonctionne que si le fichier youpla.bla existe, or d'autres webserv permettent de passer *.bla au CGI avec des wildcards.
 	- Parfois, la requête GET http://127.0.0.1:8002/directory/oulalala retourne un "200" alors que le fichier n'existe pas.
 	- Lors d'une redirection de dossier (par exemple de "/post_body" à "/post_body/"), la méthode originelle de la requête n'est pas préservée : on passe automatiquement à un GET. Après qques recherches, il faudrait utiliser un 307. Sauf que ce n'est vraiment pas ce que NGINX fait. --> Plutôt édicter une règle spéciale quand on a un dossier et une méthode POST autorisée, pas de redirect.
+	- Segfault pour un fichier de configuration avec un server_block vide.

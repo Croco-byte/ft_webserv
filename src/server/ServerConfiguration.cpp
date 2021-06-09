@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/27 17:58:54 by user42            #+#    #+#             */
-/*   Updated: 2021/06/07 15:28:00 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/09 17:24:02 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,6 +122,18 @@ std::vector<Route> const &				ServerConfiguration::getRoutes() const
 
 bool									ServerConfiguration::isDefault(void) const
 { return (_is_default); }
+
+bool									ServerConfiguration::hasRootRoute(void) const
+{
+	if (_vecRoutes.empty())
+		return (false);
+	for (std::vector<Route>::const_iterator it = _vecRoutes.begin(); it != _vecRoutes.end(); it++)
+	{
+		if ((*it).getRoute() == "/")
+			return (true);
+	}
+	return (false);
+}
 
 std::string								ServerConfiguration::getErrorExplanation(int code) const
 {
