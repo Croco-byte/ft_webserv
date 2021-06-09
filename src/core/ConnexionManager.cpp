@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 10:31:05 by user42            #+#    #+#             */
-/*   Updated: 2021/06/09 10:22:34 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/09 11:16:49 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,7 @@ void			ConnexionManager::run(void)
 				FD_SET(*it, &writing_set);
 
 			ret = select(_max_fd + 1, &reading_set, &writing_set, 0, &timeout);
-			this->handleIncompleteRequests(reading_set);
+//			this->handleIncompleteRequests(reading_set);
 		}
 
 		if (ret > 0)
@@ -125,14 +125,14 @@ void			ConnexionManager::run(void)
 				
 				if (FD_ISSET(socket, &reading_set))
 				{
-					std::map<long,time_t>::iterator incompleteIt = _incompleteRequests.find(socket);
+//					std::map<long,time_t>::iterator incompleteIt = _incompleteRequests.find(socket);
 					long	ret = it->second->recv(socket);
 				
 					if (ret == 0)
 					{
 						_write_fds.push_back(socket);
-						if (incompleteIt != _incompleteRequests.end())
-							_incompleteRequests.erase(incompleteIt);
+//						if (incompleteIt != _incompleteRequests.end())
+//							_incompleteRequests.erase(incompleteIt);
 					}
 					else if (ret == -1)
 					{
@@ -140,12 +140,12 @@ void			ConnexionManager::run(void)
 						FD_CLR(socket, &reading_set);
 						_read_fds.erase(socket);
 						it = _read_fds.begin();
-						if (incompleteIt != _incompleteRequests.end())
-							_incompleteRequests.erase(socket);
+//						if (incompleteIt != _incompleteRequests.end())
+//							_incompleteRequests.erase(socket);
 					}
-					else
-						if (incompleteIt == _incompleteRequests.end())
-							_incompleteRequests[socket] = time(NULL);
+//					else
+//						if (incompleteIt == _incompleteRequests.end())
+//							_incompleteRequests[socket] = time(NULL);
 
 					ret = 0;
 					break ;
@@ -192,7 +192,7 @@ void			ConnexionManager::handleIncompleteRequests(fd_set reading_set)
 	{
 		long	socket = it->first;
 		time_t comp = time(NULL);
-		if (_incompleteRequests.find(socket) != _incompleteRequests.end() && !FD_ISSET(socket, &reading_set) && difftime(comp, _incompleteRequests[socket]) > 3)
+		if (_incompleteRequests.find(socket) != _incompleteRequests.end() && !FD_ISSET(socket, &reading_set) && difftime(comp, _incompleteRequests[socket]) > 300)
 		{
 			Console::info("Client stopped transmitting data on an incomplete request ; bouncing the client with socket " + Utils::to_string(socket) + " on server [" + (it->second)->getVirtualHosts()[0].getHost() + ":" + Utils::to_string((it->second)->getVirtualHosts()[0].getPort()) + "]");
 			(it->second)->resetSocket(socket);
