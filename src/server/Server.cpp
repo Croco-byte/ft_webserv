@@ -733,6 +733,11 @@ bool		Server::requestIsValid(Response & response, Request request, Route & route
 		response.setStatus(406);
 		return (false);
 	}
+	else if (this->requestRequireCGI(request, route) && !Utils::canOpenFile(route.getCGIBinary()))
+	{
+		response.setStatus(500);
+		return (false);
+	}
 	return (true);
 }
 
