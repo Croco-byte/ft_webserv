@@ -312,14 +312,25 @@ namespace Utils
 		return (src);
 	}
 
+	int								checkEnd(const std::string& str, const std::string& end)
+	{
+		int	i = str.size();
+		int	j = end.size();
+
+		while (j > 0)
+		{
+			i--;
+			j--;
+			if (i < 0 || str[i] != end[j])
+				return (1);
+		}
+		return (0);
+	}
+
 	bool						receivedLastChunk(std::string & request)
 	{
-		size_t lastChunk = request.find("0\r\n\r\n");
-		if (lastChunk != std::string::npos)
-		{
-			request = request.substr(0, lastChunk + 5);							// We drop everything that is following the last chunk in the request
+		if (!checkEnd(request, "0\r\n\r\n"))
 			return (true);
-		}
 		return (false);
 	}
 

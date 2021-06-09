@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/07 16:35:58 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/08 17:21:06 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -275,7 +275,7 @@ void				Server::setResponseBody(Response & response, Request const & request, Ro
 
 void				Server::handlePUTRequest(Request const & request, Response & response, std::string const & targetPath, ServerConfiguration & virtualHost)
 {
-	Console::error(targetPath);
+	Console::info(targetPath);
 	std::ofstream file;
 	if (Utils::isRegularFile(targetPath))
 	{
@@ -346,7 +346,6 @@ void				Server::handlePOSTRequest(Response & response, Request const & request, 
 		std::string		CGIBody;
 	
 		output = this->execCGI(request, route, virtualHost);
-
 		// SPLIT HEADERS AND BODY FROM CGI RETURN
 		std::istringstream			origStream(output);
 		std::string					curLine;
@@ -364,8 +363,8 @@ void				Server::handlePOSTRequest(Response & response, Request const & request, 
 				else if (!inHeader)
 					body += curLine;
 			}
-			response.setBody(body);
 		}
+		response.setBody(body);
 	}
 	else
 	{
@@ -380,7 +379,7 @@ void				Server::handleGETRequest(Response & response, Request const & request, R
 	std::string		targetPath = getLocalPath(request, route);
 	std::string		lastModified = Utils::getLastModified(targetPath);
 
-	Console::error("Target path => " + targetPath);
+	Console::info("Target path => " + targetPath);
 	response.setHeader("Last-Modified", lastModified);
 	if (Utils::isDirectory(targetPath))
 	{
@@ -694,7 +693,7 @@ bool		Server::requestIsValid(Response & response, Request request, Route & route
 	std::string		indexPath = (targetPath[targetPath.size() - 1] == '/') ? targetPath + route.getIndex() : targetPath + "/" + route.getIndex();
 	unsigned int	limit = route.getMaxBodySize();
 	
-	Console::error(route.getRoute());
+	Console::info(route.getRoute());
 	if (request.getValidity() != 0)
 	{
 		response.setStatus(request.getValidity());

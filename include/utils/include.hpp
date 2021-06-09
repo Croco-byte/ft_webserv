@@ -48,7 +48,7 @@
 
 # define UNUSED(X)							(void)(X)
 
-# define RECV_SIZE							65536
+# define RECV_SIZE							131072
 # define CGI_SIZE							65536
 # define SOCKET_MAX							1000000
 
