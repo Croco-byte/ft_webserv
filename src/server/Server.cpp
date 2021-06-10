@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/22 11:06:00 by user42            #+#    #+#             */
-/*   Updated: 2021/06/09 17:45:11 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/10 10:42:59 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -711,6 +711,7 @@ bool		Server::requestIsValid(Response & response, Request request, Route & route
 	}
 	else if ((request.getMethod() == "GET" || request.getMethod() == "POST") && !Utils::isDirectory(targetPath) && !Utils::isRegularFile(targetPath))
 	{
+		std::cout << "[DEBUG] Not a directory, not a file. Returning 404" << std::endl;
 		response.setStatus(404);
 		return (false);
 	}

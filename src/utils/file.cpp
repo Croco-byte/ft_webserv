@@ -24,18 +24,22 @@ namespace Utils
 	bool			isRegularFile(std::string const & filename)
 	{
 		struct stat tmp_stat;
-		stat(filename.c_str(), &tmp_stat);
-		if (S_ISREG(tmp_stat.st_mode))
-			return (true);
+		if (stat(filename.c_str(), &tmp_stat) == 0)
+		{
+			if (tmp_stat.st_mode & S_IFREG)
+				return (true);
+		}
 		return (false);
 	}
 
 	bool			isDirectory(std::string const & name)
 	{
 		struct stat tmp_stat;
-		stat(name.c_str(), &tmp_stat);
-		if (S_ISDIR(tmp_stat.st_mode))
-			return (true);
+		if (stat(name.c_str(), &tmp_stat) == 0)
+		{
+			if (tmp_stat.st_mode & S_IFDIR)
+				return (true);
+		}
 		return (false);
 	}
 

@@ -4,7 +4,7 @@
 I. Tests de load / stress tests (tester.conf)
 
 Pour les tests de load / les stress tests du serveur web, utiliser le testeur de 42 à la racine du repository, en lançant le serveur avec
-le fichier de configuration config/tester.conf
+le fichier de configuration config/tester.conf.
 
 >>>> TESTEUR 42
 
@@ -14,8 +14,8 @@ le fichier de configuration config/tester.conf
 
 NOTES :
 	- La configuration minimale avec laquelle le testeur fonctionne de manière stable est : 3 CPUs ; 6309 Mo RAM. Avec moins de puissance, le testeur
-	  crash de manière régulière au dernier test, ou prend beaucoup trop de temps (de telle sorte que le serveur ne complète jamais ou bounce 
-	  certains clients qui mettent plus de 20 minutes à envoyer une requête).
+	  peut crash au dernier test, ou prend beaucoup trop de temps (de telle sorte que le serveur ne complète jamais ou bounce certains clients qui
+	  mettent plus de 20 minutes à envoyer une requête).
 
 
 
@@ -151,6 +151,19 @@ NOTE :
 
 
 
+>>>> TESTS CONTENU WEB STATIQUE ET PAGES D'ERREUR CUSTOMS
+
+> COMMANDES :
+	- Dans un browser : http://127.0.0.1:8002/site/index.html
+	- Dans un browser : http://127.0.0.1:8002/random.jpg
+
+NOTE :
+	- Dans le premier cas, la page "index.html" est bien servie, ainsi que les fichiers javascript et css qui y sont associés.
+	- Dans le second cas, une erreur 404 est renvoyée car le fichier "random.jpg" n'existe pas.
+	- La page d'erreur 404 chargée est une page custom, dont le path est indiqué dans le fichier de configuration.
+
+
+
 >>>> TESTS CGI ET CLIENT MAX BODY SIZE
 
 > COMMANDES :
@@ -165,14 +178,127 @@ NOTE :
 
 >>>> BASIC AUTHENTICATION TESTS
 
-> Commandes :
+> COMMANDES :
 	- Dans un browser : http://127.0.0.1:8002/private/
 
 NOTE :
 	- La première requête à cette URL retournera un 401 Unauthorized, et le browser affichera une fenêtre invitant à saisir des credentials.
 	- Le fichier contenant les credentials est : /www/private/.auth (défini dans la configuration).
 	- Le format du fichier est le suivant : username:password, 1 par ligne.
-	- Entrez n'importe lesquels des 3 credentials du fichier, et vous serez autorisé à consulter l'autoindex de /private.
+	- Entrez des credentials non valides : un 401 sera de nouveau retourné.
+	- Essayez de fermer la boîte de dialogue vous invitant à saisir vos credentials : un 401 sera retourné.
+	- Entrez n'importe lesquels des 3 credentials valides du fichier, et vous serez autorisé à consulter l'autoindex de /private.
 	- Notons qu'essayer d'accéder directement au fichier /private/secrets/secrets.txt demande également une authentification, comme tous les sous-dossiers de /private,
-	  à moins qu'une route correspondant à l'un de ces sous-dossiers ne désactive explicitement l'authentification.
+	  à moins qu'une route correspondant à l'un de ces sous-dossiers ne désactive explicitement l'authentification pour ce sous-dossier.
 
+
+
+>>>> MÉCANISME DE PROTECTION CONTRE LES REQUÊTES INCOMPLÈTES
+
+> COMMANDES :
+	- Par telnet : telnet 127.0.0.1 8002
+	- Entrer la requête suivante :
+
+GET / HTTP/1.1
+Host: 127.0.0.1
+Content-Length: 72
+
+aaaabbbbccccdddd
+
+NOTES :
+	- On remarqué ici que le Content-Length est plus long que le véritable contenu de la requête. Un mécanisme a été mis en place afin que ce type de requêtes ne charge pas à l'infini.
+	- Au bout de 20 minutes, on ferme la connexion d'un client qui n'a pas terminé de transmettre une requête incomplète (ce qui ne devrait jamais arriver)
+	- Le délai de 20 minutes est élevé, notamment par rapport à NGINX qui n'attend que 10 secondes. Nous avons défini un délai élevé pour permettre au dernier test du testeur 42 de s'effectuer
+	  correctement, car les volumes de données sont importants, et permettre le traitement complet des requêtes des workers. Dans un scénario de vie réelle, le serveur utiliserait probablement
+	  des threads pour répartir son load, et restreindrait la quantité de données qu'il accepte de recevoir : on pourrait alors tout à fait réduire le délai à 10 secondes, comme NGINX.
+	- Le délai d'attente peut être modifié facilement, dans la fonction "handleIncompleteRequests" du fichier "ConnexionManager.cpp", pour faciliter les tests.
+
+
+
+>>>> TESTS DE FICHIERS NON-ACCESSIBLES
+
+> COMMANDES :
+	- Dans un browser / via curl : http://127.0.0.1:8002/unauthorized
+
+NOTES :
+	- Nous avons retiré les permissions de lecture du fichier "/unauthorized". Une erreur 403 Forbidden est donc retournée par le serveur.
+
+
+
+>>>> TESTS DE GESTION DES REQUÊTES MAL FORMÉES
+
+> COMMANDES :
+	- Via telnet, entrer les requêtes suivantes :
+
+GET / HTTP/1.3
+Host: 127.0.0.1
+
+GET / HTTP/1.1 bla
+Host: 127.0.0.1
+
+GET / HTTP/1.1
+
+LOL / HTTP/1.1
+Host: 127.0.0.1
+
+NOTES :
+	- Attention à bien prendre le saut de ligne après les requêtes, ou telnet n'enverra pas la requête.
+	- Dans le premier cas, un code 505 HTTP Method Not Supported est renvoyé.
+	- Dans le second cas, un code 400 Bad Request est renvoyé.
+	- Dans le troisième cas, un code 400 Bad Request est renvoyé.
+	- Dans le quatrième cas, un code 405 HTTP Method Not Allowed est renvoyé.
+
+
+
+>>>> TESTS MÉTHODE PUT
+
+> COMMANDES :
+	- Via curl : curl -X PUT -d $'content\non\nseveral\nlines' http://127.0.0.1:8002/uploads/test.txt -v
+	- Via curl : curl -X PUT -d "some new content" http://127.0.0.1:8002/uploads/test.txt -v
+	- Via curl : curl -X PUT -d "this shouldn't be allowed" http://127.0.0.1:8002/errorpages/test.txt -v
+	- Via curl : curl -X PUT -d "some content" http://127.0.0.1:8002/uploads/ -v
+	- Via curl : curl -X PUT -d "some content" http://127.0.0.1:8002/uploads/idontexist/test.txt -v
+
+
+NOTES :
+	- Dans le premier cas, la méthode PUT est autorisée pour la route /uploads. La requête est acceptée, le fichier est créé, et le serveur répond avec 201 Created.
+	- Dans le second cas, de même la méthode PUT est autorisée. Un fichier "test.txt" existe déjà : son contenu est remplacé et le serveur renvoie un code 204.
+	- Dans le troisième cas, la méthode PUT n'est pas autorisée pour la route errorpages. Une erreur 405 est retournée.
+	- Dans le quatrième cas, on essaie de "put" sur un dossier : une erreur 409 Conflict est renvoyée.
+	- Dans le cinquième cas, on essaie de "put" dans un dossier qui n'existe pas : une erreur 403 est renvoyée.
+
+
+
+>>>> TESTS MÉTHODE DELETE
+
+> COMMANDES :
+	- Via curl : curl -X DELETE http://127.0.0.1:8002/uploads/test.txt -v
+	- Via curl : curl -X DELETE http://127.0.0.1:8002/uploads/hehe.txt -v
+	- Via curl : curl -X DELETE http://127.0.0.1:8002/favicon.ico -v
+
+NOTES :
+	- Dans le premier cas, la méthode DELETE est autorisée. La requête est acceptée, le fichier test.txt est détruit, le serveur renvoie un code 204.
+	- Dans le second cas, on essaie de DELETE un fichier qui n'existe pas. Le serveur renvoie une erreur 404.
+	- Dans le troisième cas, on essaie de supprimer un fichier dans un chemin qui n'accepte pas la méthode DELETE. Une erreur 405 est retournée.
+
+
+
+>>>> LISTE DES HEADERS IMPLEMENTÉS
+			> Accept-Charset
+			> Accept-Language
+			> Allow
+			> Authorization
+			> Content-Language
+			> Content-Length
+			> Content-Location
+			> Content-Type
+			> Date
+			> Host
+			> Last-Modified
+			> Location
+			> Referrer
+			> Retry-After
+			> Server
+			> Transfer-Encoding
+			> User-Agent
+			> WWW-Authenticate

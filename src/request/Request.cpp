@@ -20,9 +20,7 @@ void						Request::load(std::string request)
 	
 	this->parseRequestFirstLine(request_lines[0]);
 	this->parseRequestHeaders(request_lines);
-	std::cout << "[DEBUG] Started parsing request" << std::endl;
 	this->parseRequestBody(request);
-	std::cout << "[DEBUG] Finished parsing request" << std::endl;
 	this->parseLang();
 
 	// Some debugging informations
