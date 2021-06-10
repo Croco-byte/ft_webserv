@@ -169,6 +169,7 @@ NOTE :
 > COMMANDES :
 	- Par curl : curl -X POST -d "a=hi&b=hello" http://127.0.0.1:8002/cgi/index.php
 	- Par curl : curl -X POST -d "blablablablablablablabla" http://127.0.0.1:8002/cgi/index.php
+	- Par curl : curl http://127.0.0.1:8002/cgi/index.php?a=b&c=d&hello=correcteur
 
 NOTE :
 	- Premier cas : la requête est bien passée au CGI, et la réponse renvoie ce que le CGI retourne. Code 200.
