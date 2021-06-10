@@ -6,7 +6,7 @@
 /*   By: user42 <user42@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/27 17:58:54 by user42            #+#    #+#             */
-/*   Updated: 2021/06/09 17:24:02 by user42           ###   ########.fr       */
+/*   Updated: 2021/06/10 13:56:47 by user42           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,8 +160,8 @@ std::ostream	& operator<<(std::ostream &stream, ServerConfiguration const & conf
 	stream << "\033[0m";
 	stream << "    - listen				: " << conf.getPort() << std::endl;
 	stream << "    - host				: " << conf.getHost() << std::endl;
-	stream << "    - server_name			: " << conf.getName() << std::endl;
-	stream << "    - server_root			: " << conf.getServerRoot() << std::endl;
+	stream << "    - server_name		: " << conf.getName() << std::endl;
+	stream << "    - server_root		: " << conf.getServerRoot() << std::endl;
 
 	for (std::vector<Route>::const_iterator it = (conf.getRoutes()).begin(); it != (conf.getRoutes()).end(); it++)
 		std::cout << *it << std::endl;
