@@ -146,9 +146,9 @@ Je code sur la VM, j'ai donc dû rajouter 2-3 includes pour compiler le projet (
 
 
 > TESTER :
-	- Renvoyer une erreur 500 quand on arrive pas à ouvrir le binary du CGI, pour l'instant ça ne renvoie rien du tout, et ça produit des leaks.
-	- S'occuper de la destination des fichiers uploadés. Pour le moment, quand on PUT /put_test, ça upload dans put_test, or cela devrait upload dans un dossier du choix de l'utilisateur.
-	- Le test avec /directory/youpla.bla ne fonctionne que si le fichier youpla.bla existe, or d'autres webserv permettent de passer *.bla au CGI avec des wildcards.
-	- Parfois, la requête GET http://127.0.0.1:8002/directory/oulalala retourne un "200" alors que le fichier n'existe pas.
-	- Lors d'une redirection de dossier (par exemple de "/post_body" à "/post_body/"), la méthode originelle de la requête n'est pas préservée : on passe automatiquement à un GET. Après qques recherches, il faudrait utiliser un 307. Sauf que ce n'est vraiment pas ce que NGINX fait. --> Plutôt édicter une règle spéciale quand on a un dossier et une méthode POST autorisée, pas de redirect.
-	- Segfault pour un fichier de configuration avec un server_block vide.
+	[DONE] Renvoyer une erreur 500 quand on arrive pas à ouvrir le binary du CGI, pour l'instant ça ne renvoie rien du tout, et ça produit des leaks.
+	[DONE] S'occuper de la destination des fichiers uploadés. Pour le moment, quand on PUT /put_test, ça upload dans put_test, or cela devrait upload dans un dossier du choix de l'utilisateur.
+	[DONE] Le test avec /directory/youpla.bla ne fonctionne que si le fichier youpla.bla existe, or d'autres webserv permettent de passer *.bla au CGI avec des wildcards.
+	[DONE] Parfois, la requête GET http://127.0.0.1:8002/directory/oulalala retourne un "200" alors que le fichier n'existe pas.
+	[DONE] Lors d'une redirection de dossier (par exemple de "/post_body" à "/post_body/"), la méthode originelle de la requête n'est pas préservée : on passe automatiquement à un GET. Après qques recherches, il faudrait utiliser un 307. Sauf que ce n'est vraiment pas ce que NGINX fait. --> Plutôt édicter une règle spéciale quand on a un dossier et une méthode POST autorisée, pas de redirect.
+	[DONE] Segfault pour un fichier de configuration avec un server_block vide.
